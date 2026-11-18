@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLM Bench</title>
+<style>
+:root{
+  --bg:#070b16; --bg2:#0b1222; --panel:rgba(20,32,58,.55); --panel2:rgba(28,44,78,.5);
+  --line:rgba(120,170,255,.14); --line2:rgba(120,170,255,.28);
+  --tx:#e7eefc; --tx2:#9fb0d0; --tx3:#6b7ea3;
+  --ac:#4aa8ff; --ac2:#5ee7ff; --ok:#3ddc97; --mid:#ffc857; --bad:#ff6b81;
+  --r:16px; --font:-apple-system,"Segoe UI",Inter,Roboto,system-ui,sans-serif; --mono:ui-monospace,"Cascadia Code",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font:14px/1.5 var(--font);color:var(--tx);background:var(--bg);min-height:100vh;
+  background-image:radial-gradient(900px 500px at 10% -10%,rgba(74,168,255,.18),transparent 60%),
+  radial-gradient(700px 500px at 100% 0%,rgba(94,231,255,.10),transparent 60%)}
+button,input,select{font:inherit;color:inherit}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;letter-spacing:.2px}
+.logo i{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 0 24px rgba(74,168,255,.5)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.chip{font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--tx2)}
+.chip b{font-weight:600}.chip.on b{color:var(--ok)}.chip.off b{color:var(--tx3)}
+nav.tabs{display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--panel);width:max-content;margin-bottom:16px}
+nav.tabs button{border:0;background:none;padding:7px 14px;border-radius:9px;color:var(--tx2);cursor:pointer}
+nav.tabs button.act{background:linear-gradient(135deg,rgba(74,168,255,.25),rgba(94,231,255,.15));color:var(--tx)}
+.grid{display:grid;grid-template-columns:380px 1fr;gap:16px;align-items:start}
+@media(max-width:920px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--tx2);margin:0 0 12px;font-weight:600}
+.panel+.panel{margin-top:16px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:12px;background:rgba(0,0,0,.25);border:1px solid var(--line);margin-bottom:14px}
+.seg button{border:0;background:none;padding:8px;border-radius:9px;color:var(--tx2);cursor:pointer}
+.seg button.act{background:var(--panel2);color:var(--tx);box-shadow:inset 0 0 0 1px var(--line2)}
+label.f{display:block;font-size:12px;color:var(--tx2);margin:12px 0 6px}
+.in{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:rgba(4,8,18,.6);outline:none;transition:border-color .15s}
+.in:focus{border-color:var(--ac)}
+.row{display:flex;gap:8px;align-items:center}
+.row .in{flex:1}
+.prov{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.prov button{padding:8px 6px;border-radius:10px;border:1px solid var(--line);background:rgba(4,8,18,.4);cursor:pointer;font-size:13px;color:var(--tx2)}
+.prov button.act{border-color:var(--ac);color:var(--tx);background:rgba(74,168,255,.12)}
+.sub{display:grid;gap:8px}
+.subcard{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:12px;border:1px solid var(--line);background:rgba(4,8,18,.4);cursor:pointer;text-align:left}
+.subcard.act{border-color:var(--ac);background:rgba(74,168,255,.1)}
+.subcard .ic{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:700;color:#04101f}
+.subcard .t{font-weight:600}.subcard .d{font-size:12px;color:var(--tx2)}
+.subcard code{font-family:var(--mono);font-size:11.5px;background:rgba(255,255,255,.06);padding:1px 6px;border-radius:5px}
+.st{font-size:11px;padding:1px 7px;border-radius:99px;margin-left:6px}
+.st.ok{background:rgba(61,220,151,.15);color:var(--ok)}.st.no{background:rgba(255,107,129,.12);color:var(--bad)}
+.cats{display:flex;flex-wrap:wrap;gap:6px}
+.cat{padding:6px 11px;border-radius:99px;border:1px solid var(--line);cursor:pointer;font-size:13px;color:var(--tx3);background:none}
+.cat.on{color:var(--tx);border-color:var(--line2);background:rgba(74,168,255,.14)}
+details{margin-top:12px}summary{cursor:pointer;color:var(--tx2);font-size:13px}
+.adv{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.btn{padding:10px 14px;border-radius:10px;border:1px solid var(--line2);background:rgba(74,168,255,.1);cursor:pointer;white-space:nowrap}
+.btn:hover{background:rgba(74,168,255,.2)}
+.btn.main{width:100%;margin-top:16px;padding:13px;border:0;font-weight:600;font-size:15px;color:#03101f;
+  background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 8px 30px rgba(74,168,255,.3)}
+.btn.main:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:none}.btn.sm{padding:5px 10px;font-size:12.5px}
+.msg{font-size:12.5px;margin-top:8px;color:var(--tx2);word-break:break-word}
+.msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
+.hint{font-size:12px;color:var(--tx3);margin-top:6px}
+.top{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+@media(max-width:600px){.top{grid-template-columns:1fr}}
+.ring{position:relative;width:132px;height:132px}
+.ring svg{transform:rotate(-90deg)}
+.ring .v{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring .v b{font-size:34px;line-height:1}.ring .v span{font-size:11px;color:var(--tx2);text-transform:uppercase;letter-spacing:.08em}
+.bars{display:grid;gap:9px}
+.bar{display:grid;grid-template-columns:130px 1fr 44px;gap:10px;align-items:center;font-size:13px}
+.bar .tr{height:8px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
+.bar .fl{height:100%;border-radius:99px;width:0;transition:width .6s ease}
+.bar .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--tx2)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:16px}
+.tile{padding:10px 12px;border-radius:12px;background:rgba(4,8,18,.45);border:1px solid var(--line)}
+.tile .k{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em}
+.tile .v{font-size:15px;font-weight:600;margin-top:2px;word-break:break-word}
+.prog{height:4px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden;margin:14px 0 4px}
+.prog div{height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--ac2));transition:width .4s}
+.status{display:flex;justify-content:space-between;font-size:12.5px;color:var(--tx2)}
+.tasks{margin-top:8px}
+.grp{margin-top:14px}.grp h3{font-size:12px;color:var(--tx2);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.task{display:grid;grid-template-columns:22px 1fr 56px;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;border:1px solid transparent}
+.task:hover{background:rgba(255,255,255,.03);border-color:var(--line)}
+.task .nm{font-family:var(--mono);font-size:12.5px}.task .nt{font-size:12px;color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.task .sc{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--tx3);margin:auto}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.12);border-top-color:var(--ac);animation:sp .8s linear infinite;margin:auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.empty{color:var(--tx3);text-align:center;padding:50px 10px}
+.empty b{display:block;color:var(--tx2);font-size:16px;margin-bottom:6px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{color:var(--tx2);font-weight:600;font-size:12px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+.pill{display:inline-block;min-width:44px;text-align:center;padding:2px 8px;border-radius:7px;font-weight:600;font-variant-numeric:tabular-nums}
+.warn{color:var(--bad);font-weight:600}
+.hist-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.hide{display:none!important}
+.eye{cursor:pointer;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(4,8,18,.6);color:var(--tx2)}
+.ck{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--tx2);margin-top:8px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><i></i>LLM Bench</div>
+    <div class="chips" id="envChips"></div>
+  </header>
+
+  <nav class="tabs">
+    <button class="act" data-tab="run">Прогон</button>
+    <button data-tab="hist">История и сравнение</button>
+  </nav>
+
+  <section id="tab-run" class="grid">
+    <div>
+      <div class="panel">
+        <h2>Подключение</h2>
+        <div class="seg">
+          <button data-mode="api" class="act">API-ключ</button>
+          <button data-mode="sub">Подписка</button>
+        </div>
+
+        <div id="modeApi">
+          <div class="prov" id="provBtns"></div>
+          <div id="baseWrap">
+            <label class="f">Base URL</label>
+            <input class="in" id="baseUrl" spellcheck="false">
+          </div>
+          <label class="f">Ключ</label>
+          <div class="row">
+            <input class="in" id="apiKey" type="password" placeholder="sk-..." spellcheck="false" autocomplete="off">
+            <button class="eye" id="eye" title="Показать">👁</button>
+          </div>
+          <label class="ck"><input type="checkbox" id="remember"> Запомнить ключ в этом браузере</label>
+        </div>
+
+        <div id="modeSub" class="hide">
+          <div class="sub">
+            <button class="subcard act" data-sub="claude-cli">
+              <span class="ic" style="background:linear-gradient(135deg,#ffb38a,#e9875e)">C</span>
+              <span><span class="t">Claude</span><span class="st" id="stClaude"></span>
+                <span class="d" style="display:block">Pro/Max через Claude Code. Один раз: <code>claude</code> → <code>/login</code></span></span>
+            </button>
+            <button class="subcard" data-sub="codex-cli">
+              <span class="ic" style="background:linear-gradient(135deg,#9df5d0,#3ddc97)">G</span>
+              <span><span class="t">ChatGPT</span><span class="st" id="stCodex"></span>
+                <span class="d" style="display:block">Plus/Pro через Codex CLI. Один раз: <code>codex login</code></span></span>
+            </button>
+          </div>
+          <div class="hint">Запросы идут через официальный CLI на вашем компьютере, под вашим входом. Расходуется лимит подписки.</div>
+        </div>
+
+        <label class="f">Модель</label>
+        <div class="row">
+          <input class="in" id="model" list="modelList" placeholder="название модели" spellcheck="false">
+          <button class="btn" id="checkBtn">Проверить</button>
+        </div>
+        <datalist id="modelList"></datalist>
+        <div class="msg" id="checkMsg"></div>
+
+        <label class="f">Метка прогона</label>
+        <input class="in" id="tag" placeholder="например: official, reseller-1">
+      </div>
+
+      <div class="panel">
+        <h2>Тесты</h2>
+        <div class="cats" id="cats"></div>
+        <details>
+          <summary>Дополнительно</summary>
+          <div class="adv">
+            <div><label class="f">Повторов задачи</label><input class="in" id="repeat" type="number" min="1" value="1"></div>
+            <div><label class="f">Параллельно</label><input class="in" id="workers" type="number" min="1" value="4"></div>
+            <div><label class="f">Max tokens</label><input class="in" id="maxTokens" type="number" value="4096"></div>
+            <div><label class="f">Контекст, символов</label><input class="in" id="ctxChars" type="number" value="80000"></div>
+          </div>
+          <div class="hint">Для «думающих» моделей ставьте max tokens 16000+.</div>
+        </details>
+        <button class="btn main" id="runBtn">Запустить бенчмарк</button>
+        <button class="btn ghost hide" id="stopBtn" style="width:100%;margin-top:8px">Остановить</button>
+      </div>
+    </div>
+
+    <div class="panel" id="resultPanel">
+      <div class="empty" id="emptyState"><b>Здесь появятся результаты</b>Вставьте ключ или выберите подписку и нажмите «Запустить бенчмарк».</div>
+      <div id="runView" class="hide">
+        <div class="top">
+          <div class="ring">
+            <svg width="132" height="132"><circle cx="66" cy="66" r="56" stroke="rgba(255,255,255,.07)" stroke-width="12" fill="none"/>
+              <circle id="ringFg" cx="66" cy="66" r="56" stroke="url(#g)" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="351.9" style="transition:stroke-dashoffset .8s"/>
+              <defs><linearGradient id="g"><stop offset="0" stop-color="#4aa8ff"/><stop offset="1" stop-color="#5ee7ff"/></linearGradient></defs></svg>
+            <div class="v"><div><b id="totalV">—</b><br><span>из 100</span></div></div>
+          </div>
+          <div>
+            <div style="font-weight:600;font-size:16px" id="runLabel"></div>
+            <div style="font-size:12.5px;color:var(--tx3);margin-bottom:10px" id="runBase"></div>
+            <div class="bars" id="bars"></div>
+          </div>
+        </div>
+        <div class="prog"><div id="progFill"></div></div>
+        <div class="status"><span id="statusTxt"></span><span id="statusRight"></span></div>
+        <div class="tiles" id="tiles"></div>
+        <div class="tasks" id="tasks"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-hist" class="hide">
+    <div class="panel">
+      <h2>История прогонов</h2>
+      <div class="hist-actions">
+        <button class="btn sm" id="cmpBtn">Сравнить выбранные</button>
+        <button class="btn sm ghost" id="refreshBtn">Обновить</button>
+        <span class="hint" style="margin:0">Сначала прогоните официальный ключ — это эталон. Разный «отпечаток» у одной модели = подмена.</span>
+      </div>
+      <div class="scroll"><table id="histTable"></table></div>
+    </div>
+    <div class="panel hide" id="cmpPanel">
+      <h2>Сравнение</h2>
+      <div class="scroll"><table id="cmpTable"></table></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const CAT = {code:"Кодинг", montage:"Монтаж", agent:"Агент (голос)", funnel:"Воронка", instruct:"Инструкции", context:"Длинный контекст"};
+const PROVIDERS = {
+  anthropic:{name:"Anthropic", provider:"anthropic", base:"https://api.anthropic.com", models:["claude-opus-5-5","claude-sonnet-5-5","claude-haiku-5-5"]},
+  openai:{name:"OpenAI", provider:"openai", base:"https://api.openai.com/v1", models:[]},
+  openrouter:{name:"OpenRouter", provider:"openai", base:"https://openrouter.ai/api/v1", models:[]},
+  deepseek:{name:"DeepSeek", provider:"openai", base:"https://api.deepseek.com/v1", models:["deepseek-chat","deepseek-reasoner"]},
+  gemini:{name:"Gemini", provider:"openai", base:"https://generativelanguage.googleapis.com/v1beta/openai", models:[]},
+  custom:{name:"Свой URL", provider:"openai", base:"", models:[]},
+};
+const SUB_MODELS = {"claude-cli":["default","opus","sonnet","haiku"], "codex-cli":["default"]};
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const color = v => v >= 80 ? "var(--ok)" : v >= 50 ? "var(--mid)" : "var(--bad)";
+const store = {get(k,d){try{return JSON.parse(localStorage.getItem("llmb."+k)) ?? d}catch{return d}}, set(k,v){try{localStorage.setItem("llmb."+k, JSON.stringify(v))}catch{}}};
+const api = async (path, body) => {
+  const r = await fetch(path, body ? {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)} : {});
+  return r.json();
+};
+
+let mode = store.get("mode","api"), prov = store.get("prov","anthropic"), sub = store.get("sub","claude-cli");
+let cats = store.get("cats", Object.keys(CAT)), env = {}, runId = null, since = 0, taskTotal = 0, taskDone = 0, catScores = {};
+
+/* ---------- tabs ---------- */
+$$("nav.tabs button").forEach(b => b.onclick = () => {
+  $$("nav.tabs button").forEach(x => x.classList.toggle("act", x === b));
+  $("#tab-run").classList.toggle("hide", b.dataset.tab !== "run");
+  $("#tab-hist").classList.toggle("hide", b.dataset.tab !== "hist");
+  if (b.dataset.tab === "hist") loadHistory();
+});
+
+/* ---------- connection ---------- */
+function setMode(m){
+  mode = m; store.set("mode", m);
+  $$(".seg button").forEach(b => b.classList.toggle("act", b.dataset.mode === m));
+  $("#modeApi").classList.toggle("hide", m !== "api");
+  $("#modeSub").classList.toggle("hide", m !== "sub");
+  $("#model").value = m === "api" ? store.get("model."+prov, PROVIDERS[prov].models[0] || "") : store.get("model."+sub, "default");
+  fillModels(); $("#checkMsg").textContent = "";
+}
+$$(".seg button").forEach(b => b.onclick = () => setMode(b.dataset.mode));
+
+$("#provBtns").innerHTML = Object.entries(PROVIDERS).map(([k,p]) => `<button data-p="${k}">${p.name}</button>`).join("");
+function setProv(k){
+  prov = k; store.set("prov", k);
+  $$("#provBtns button").forEach(b => b.classList.toggle("act", b.dataset.p === k));
+  const saved = store.get("base."+k, null);
+  $("#baseUrl").value = saved ?? PROVIDERS[k].base;
+  $("#apiKey").value = store.get("key."+k, "");
+  $("#remember").checked = !!store.get("key."+k, "");
+  $("#model").value = store.get("model."+k, PROVIDERS[k].models[0] || "");
+  fillModels();
+}
+$$("#provBtns button").forEach(b => b.onclick = () => setProv(b.dataset.p));
+$("#baseUrl").oninput = e => store.set("base."+prov, e.target.value);
+$("#apiKey").oninput = () => { if ($("#remember").checked) store.set("key."+prov, $("#apiKey").value); };
+$("#remember").onchange = e => store.set("key."+prov, e.target.checked ? $("#apiKey").value : "");
+$("#eye").onclick = () => { const i = $("#apiKey"); i.type = i.type === "password" ? "text" : "password"; };
+
+function setSub(s){
+  sub = s; store.set("sub", s);
+  $$(".subcard").forEach(c => c.classList.toggle("act", c.dataset.sub === s));
+  $("#model").value = store.get("model."+s, "default");
+  fillModels();
+}
+$$(".subcard").forEach(c => c.onclick = () => setSub(c.dataset.sub));
+$("#model").oninput = e => store.set("model."+(mode === "api" ? prov : sub), e.target.value);
+
+function fillModels(list){
+  const base = mode === "api" ? PROVIDERS[prov].models : SUB_MODELS[sub];
+  const all = [...new Set([...(list || []), ...base])];
+  $("#modelList").innerHTML = all.map(m => `<option value="${esc(m)}">`).join("");
+  if (mode === "sub" && !$("#model").value) $("#model").value = "default";
+}
+
+function cfg(){
+  const c = {model: $("#model").value.trim(), tag: $("#tag").value.trim(), only: cats,
+    repeat: +$("#repeat").value || 1, workers: +$("#workers").value || 4,
+    max_tokens: +$("#maxTokens").value || 4096, ctx_chars: cats.includes("context") ? (+$("#ctxChars").value || 0) : 0};
+  if (mode === "api") Object.assign(c, {provider: PROVIDERS[prov].provider, base_url: $("#baseUrl").value.trim(), key: $("#apiKey").value.trim()});
+  else c.provider = sub;
+  return c;
+}
+
+$("#checkBtn").onclick = async () => {
+  const c = cfg(), m = $("#checkMsg");
+  if (mode === "api" && !c.key) { m.className = "msg bad"; m.textContent = "Вставьте ключ"; return; }
+  m.className = "msg"; m.textContent = "Проверяю…"; $("#checkBtn").disabled = true;
+  try {
+    const r = await api("/api/check", c);
+    if (r.models?.length) fillModels(r.models);
+    const parts = [];
+    if (r.models) parts.push(`моделей доступно: ${r.models.length}`);
+    if (r.ok === true && r.ping_sec != null) parts.push(`ответ за ${r.ping_sec} с` + (r.served_model ? ` · отвечает ${r.served_model}` : ""));
+    if (r.ok === false) parts.push(r.error || r.models_error || "ошибка");
+    else if (!r.models && r.models_error && r.ping_sec == null) parts.push(r.models_error);
+    m.className = "msg " + (r.ok ? "ok" : "bad");
+    m.textContent = (r.ok ? "✓ " : "✗ ") + (parts.join(" · ") || (r.ok ? "ключ работает — выберите модель" : "не удалось"));
+  } catch (e) { m.className = "msg bad"; m.textContent = "Сервер недоступен"; }
+  $("#checkBtn").disabled = false;
+};
+
+/* ---------- categories ---------- */
+$("#cats").innerHTML = Object.entries(CAT).map(([k,v]) => `<button class="cat" data-c="${k}">${v}</button>`).join("");
+function paintCats(){ $$(".cat").forEach(b => b.classList.toggle("on", cats.includes(b.dataset.c))); store.set("cats", cats); }
+$$(".cat").forEach(b => b.onclick = () => { const k = b.dataset.c; cats = cats.includes(k) ? cats.filter(x => x !== k) : [...cats, k]; paintCats(); });
+
+/* ---------- run ---------- */
+$("#runBtn").onclick = async () => {
+  const c = cfg();
+  if (mode === "api" && (!c.key || !c.model)) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Нужны ключ и модель"; return; }
+  if (!cats.length) return;
+  resetView(c);
+  $("#runBtn").disabled = true; $("#stopBtn").classList.remove("hide");
+  const r = await api("/api/run", c);
+  runId = r.id; since = 0; poll();
+};
+$("#stopBtn").onclick = () => runId && api("/api/cancel", {id: runId});
+
+function resetView(c){
+  $("#emptyState").classList.add("hide"); $("#runView").classList.remove("hide");
+  $("#runLabel").textContent = (c.model || "default") + (c.tag ? ` [${c.tag}]` : "");
+  $("#runBase").textContent = mode === "api" ? c.base_url : (sub === "claude-cli" ? "Claude — подписка" : "ChatGPT — подписка");
+  $("#tiles").innerHTML = ""; $("#tasks").innerHTML = ""; $("#bars").innerHTML = "";
+  $("#totalV").textContent = "—"; setRing(0); $("#progFill").style.width = "0";
+  $("#statusTxt").textContent = "Проверяю ключ и скорость…"; $("#statusRight").textContent = "";
+  taskTotal = taskDone = 0; catScores = {};
+}
+function setRing(v){ $("#ringFg").style.strokeDashoffset = 351.9 * (1 - v / 100); }
+
+async function poll(){
+  let r;
+  try { r = await api(`/api/run?id=${runId}&since=${since}`); } catch { setTimeout(poll, 1500); return; }
+  since = r.next;
+  r.events.forEach(handle);
+  if (r.status === "running") setTimeout(poll, 700);
+  else { $("#runBtn").disabled = false; $("#stopBtn").classList.add("hide"); }
+}
+
+const HEALTH = [["ping_sec","Задержка, с"],["tok_per_sec","Токенов/с"],["fingerprint_in_tokens","Отпечаток"],["served_model","Отвечает модель"],
+  ["model_listed","Модель в списке"],["deterministic_t0","Повторяемость"],["self_identity","Называет себя"]];
+function handle(ev){
+  if (ev.type === "health") {
+    const h = ev.data;
+    $("#tiles").innerHTML = HEALTH.filter(([k]) => h[k] !== undefined && h[k] !== null)
+      .map(([k,n]) => `<div class="tile" ${k==="self_identity"?'style="grid-column:1/-1"':""}><div class="k">${n}</div><div class="v">${esc(typeof h[k]==="boolean" ? (h[k]?"да":"нет") : h[k])}</div></div>`).join("");
+    $("#statusTxt").textContent = "Ключ работает, запускаю задачи…";
+  }
+  if (ev.type === "start") {
+    taskTotal = ev.tasks.length;
+    if (!ev.ffmpeg && ev.tasks.some(t => t.cat === "montage")) $("#statusRight").textContent = "ffmpeg не найден — монтаж проверяется по тексту команды";
+    const groups = {};
+    ev.tasks.forEach(t => (groups[t.cat] ||= []).push(t));
+    $("#tasks").innerHTML = Object.entries(groups).map(([c, ts]) => `<div class="grp"><h3>${CAT[c] || c}</h3>` +
+      ts.map(t => `<div class="task" id="t-${t.id}"><div class="spin"></div><div><div class="nm">${t.id}</div><div class="nt">выполняется…</div></div><div class="sc"></div></div>`).join("") + "</div>").join("");
+    $("#bars").innerHTML = Object.keys(groups).map(c => `<div class="bar" id="b-${c}"><span>${CAT[c] || c}</span><div class="tr"><div class="fl"></div></div><span class="n">—</span></div>`).join("");
+    $("#statusTxt").textContent = `0 / ${taskTotal}`;
+  }
+  if (ev.type === "task") {
+    const r = ev.data, v = Math.round(r.score * 100), el = $("#t-" + r.id);
+    if (el) {
+      el.children[0].outerHTML = `<div class="dot" style="background:${color(v)}"></div>`;
+      el.querySelector(".nt").textContent = r.notes[r.notes.length - 1];
+      el.querySelector(".nt").title = r.notes.join("\n");
+      el.querySelector(".sc").innerHTML = `<span style="color:${color(v)}">${v}</span>`;
+    }
+    (catScores[r.cat] ||= []).push(r.score);
+    const avg = Math.round(100 * catScores[r.cat].reduce((a,b) => a+b, 0) / catScores[r.cat].length), b = $("#b-" + r.cat);
+    if (b) { b.querySelector(".fl").style.width = avg + "%"; b.querySelector(".fl").style.background = color(avg); b.querySelector(".n").textContent = avg; }
+    taskDone++;
+    $("#progFill").style.width = (100 * taskDone / taskTotal) + "%";
+    $("#statusTxt").textContent = `${taskDone} / ${taskTotal}`;
+    const vals = Object.values(catScores).map(a => 100 * a.reduce((x,y) => x+y, 0) / a.length);
+    const tot = Math.round(vals.reduce((a,b) => a+b, 0) / vals.length);
+    $("#totalV").textContent = tot; setRing(tot);
+  }
+  if (ev.type === "done") {
+    $("#totalV").textContent = Math.round(ev.summary.TOTAL); setRing(ev.summary.TOTAL);
+    $("#statusTxt").textContent = `Готово за ${ev.seconds} с · токены: ${ev.tokens.in} вход / ${ev.tokens.out} выход`;
+    $("#statusRight").textContent = "Сохранено в историю";
+  }
+  if (ev.type === "error") {
+    $("#statusTxt").innerHTML = `<span class="warn">${esc(ev.message)}</span>`;
+    $$(".task .spin").forEach(s => s.outerHTML = `<div class="dot"></div>`);
+  }
+}
+
+/* ---------- history ---------- */
+let hist = [];
+async function loadHistory(){
+  hist = await api("/api/results");
+  const t = $("#histTable");
+  if (!hist.length) { t.innerHTML = `<tr><td class="empty">Пока нет прогонов</td></tr>`; return; }
+  t.innerHTML = `<tr><th></th><th>Прогон</th><th>Дата</th><th class="num">Итог</th><th class="num">Отпечаток</th><th class="num">Ток/с</th><th></th></tr>` +
+    hist.map((h, i) => `<tr><td><input type="checkbox" data-i="${i}" ${i < 2 ? "checked" : ""}></td><td>${esc(h.label)}<div class="hint" style="margin:0">${esc(h.provider)}</div></td>
+      <td>${esc(h.date)}</td><td class="num"><span class="pill" style="background:${color(h.summary?.TOTAL)}22;color:${color(h.summary?.TOTAL)}">${Math.round(h.summary?.TOTAL ?? 0)}</span></td>
+      <td class="num">${esc(h.health?.fingerprint_in_tokens ?? "—")}</td><td class="num">${esc(h.health?.tok_per_sec ?? "—")}</td>
+      <td class="num"><button class="btn sm ghost" data-del="${esc(h.file)}">Удалить</button></td></tr>`).join("");
+  $$("[data-del]").forEach(b => b.onclick = async () => { if (confirm("Удалить прогон?")) { await api("/api/delete", {file: b.dataset.del}); loadHistory(); } });
+}
+$("#refreshBtn").onclick = loadHistory;
+$("#cmpBtn").onclick = () => {
+  const sel = $$("#histTable input:checked").map(c => hist[+c.dataset.i]);
+  if (!sel.length) return;
+  const cats = [...new Set(sel.flatMap(h => Object.keys(h.summary || {})))].filter(c => c !== "TOTAL");
+  const ids = [...new Set(sel.flatMap(h => Object.keys(h.tasks || {})))].sort();
+  const cell = v => v == null ? `<td class="num">—</td>` : `<td class="num"><span class="pill" style="background:${color(v)}22;color:${color(v)}">${Math.round(v)}</span></td>`;
+  const fps = sel.map(h => h.health?.fingerprint_in_tokens), fpDiff = new Set(fps.filter(x => x != null)).size > 1;
+  let html = `<tr><th></th>${sel.map(h => `<th class="num">${esc(h.label)}<div class="hint" style="margin:0">${esc(h.date)}</div></th>`).join("")}</tr>`;
+  html += `<tr><td><b>ИТОГ</b></td>${sel.map(h => cell(h.summary?.TOTAL)).join("")}</tr>`;
+  html += cats.map(c => `<tr><td>${CAT[c] || c}</td>${sel.map(h => cell(h.summary?.[c])).join("")}</tr>`).join("");
+  html += `<tr><td>Отпечаток токенов ${fpDiff ? '<span class="warn">≠ разные модели?</span>' : ""}</td>${fps.map(f => `<td class="num ${fpDiff ? "warn" : ""}">${esc(f ?? "—")}</td>`).join("")}</tr>`;
+  html += `<tr><td>Задержка, с</td>${sel.map(h => `<td class="num">${esc(h.health?.ping_sec ?? "—")}</td>`).join("")}</tr>`;
+  html += `<tr><td>Токенов/с</td>${sel.map(h => `<td class="num">${esc(h.health?.tok_per_sec ?? "—")}</td>`).join("")}</tr>`;
+  html += `<tr><td>Отвечает модель</td>${sel.map(h => `<td class="num">${esc(h.health?.served_model ?? "—")}</td>`).join("")}</tr>`;
+  html += `<tr><th colspan="${sel.length + 1}">По задачам</th></tr>`;
+  html += ids.map(id => `<tr><td style="font-family:var(--mono);font-size:12px">${id}</td>${sel.map(h => cell(h.tasks?.[id] == null ? null : h.tasks[id] * 100)).join("")}</tr>`).join("");
+  $("#cmpTable").innerHTML = html;
+  $("#cmpPanel").classList.remove("hide");
+  $("#cmpPanel").scrollIntoView({behavior: "smooth"});
+};
+
+/* ---------- init ---------- */
+(async () => {
+  setProv(prov); setSub(sub); setMode(mode); paintCats();
+  try {
+    env = await api("/api/env");
+    const chip = (ok, n) => `<span class="chip ${ok ? "on" : "off"}"><b>${ok ? "●" : "○"}</b> ${n}</span>`;
+    $("#envChips").innerHTML = chip(env.claude_cli, "Claude CLI") + chip(env.codex_cli, "Codex CLI") + chip(env.ffmpeg, "ffmpeg");
+    $("#stClaude").className = "st " + (env.claude_cli ? "ok" : "no"); $("#stClaude").textContent = env.claude_cli ? "найден" : "не установлен";
+    $("#stCodex").className = "st " + (env.codex_cli ? "ok" : "no"); $("#stCodex").textContent = env.codex_cli ? "найден" : "не установлен";
+  } catch {}
+})();
+</script>
+</body>
+</html>
