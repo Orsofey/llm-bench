@@ -63,7 +63,7 @@ details{margin-top:12px}summary{cursor:pointer;color:var(--tx2);font-size:13px}
   background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 8px 30px rgba(74,168,255,.3)}
 .btn.main:disabled{opacity:.5;cursor:default}
 .btn.ghost{background:none}.btn.sm{padding:5px 10px;font-size:12.5px}
-.msg{font-size:12.5px;margin-top:8px;color:var(--tx2);word-break:break-word}
+.msg{font-size:12.5px;margin-top:8px;color:var(--tx2);word-break:break-word;white-space:pre-line}
 .msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
 .hint{font-size:12px;color:var(--tx3);margin-top:6px}
 .top{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
@@ -133,13 +133,15 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <div class="prov" id="provBtns"></div>
           <div id="baseWrap">
             <label class="f">Base URL</label>
-            <input class="in" id="baseUrl" spellcheck="false">
+            <input class="in" id="baseUrl" spellcheck="false" placeholder="https://api.сервис.com/v1">
+            <div class="hint hide" id="baseHint">Адрес API из документации или кабинета сервиса, который выдал ключ. Протокол (OpenAI или Anthropic) и способ авторизации подберутся автоматически.</div>
           </div>
           <label class="f">Ключ</label>
           <div class="row">
             <input class="in" id="apiKey" type="password" placeholder="sk-..." spellcheck="false" autocomplete="off">
             <button class="eye" id="eye" title="Показать">👁</button>
           </div>
+          <div class="msg" id="keyHint"></div>
           <label class="ck"><input type="checkbox" id="remember"> Запомнить ключ в этом браузере</label>
         </div>
 
@@ -238,7 +240,7 @@ const PROVIDERS = {
   openrouter:{name:"OpenRouter", provider:"openai", base:"https://openrouter.ai/api/v1", models:[]},
   deepseek:{name:"DeepSeek", provider:"openai", base:"https://api.deepseek.com/v1", models:["deepseek-chat","deepseek-reasoner"]},
   gemini:{name:"Gemini", provider:"openai", base:"https://generativelanguage.googleapis.com/v1beta/openai", models:[]},
-  custom:{name:"Свой URL", provider:"openai", base:"", models:[]},
+  custom:{name:"Другой сервис", provider:"auto", base:"", models:[]},
 };
 const SUB_MODELS = {"claude-cli":["default","opus","sonnet","haiku"], "codex-cli":["default"]};
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
@@ -281,11 +283,38 @@ function setProv(k){
   $("#apiKey").value = store.get("key."+k, "");
   $("#remember").checked = !!store.get("key."+k, "");
   $("#model").value = store.get("model."+k, PROVIDERS[k].models[0] || "");
+  $("#baseHint").classList.toggle("hide", k !== "custom");
   fillModels();
+}
+
+const KEY_RULES = [
+  [/^sk-ant-oat/, {bad: true, msg: "Это токен подписки Claude, а не API-ключ — используйте вкладку «Подписка»."}],
+  [/^sk-ant-/, {prov: "anthropic", msg: "Ключ Anthropic."}],
+  [/^sk-or-/, {prov: "openrouter", msg: "Ключ OpenRouter."}],
+  [/^AIza/, {prov: "gemini", msg: "Ключ Google Gemini."}],
+  [/^sk-(proj|svcacct|admin)-/, {prov: "openai", msg: "Ключ OpenAI."}],
+  [/^gsk_/, {prov: "custom", base: "https://api.groq.com/openai/v1", msg: "Похоже на ключ Groq."}],
+  [/^xai-/, {prov: "custom", base: "https://api.x.ai/v1", msg: "Похоже на ключ xAI (Grok)."}],
+  [/^sk-[A-Za-z0-9]{20,}$/, {msg: "Формат sk-… бывает у OpenAI, DeepSeek и многих перепродавцов — проверьте, что выбран нужный сервис."}],
+];
+function applyKeyRule(key){
+  const h = $("#keyHint");
+  if (key.length < 8) { h.textContent = ""; return; }
+  const hit = KEY_RULES.find(([re]) => re.test(key));
+  const r = hit ? hit[1] : {prov: "custom", msg: "Ключ не от Anthropic / OpenAI / OpenRouter / Gemini. Укажите адрес API сервиса, который его выдал, — протокол подберётся автоматически."};
+  if (r.prov && r.prov !== prov) { setProv(r.prov); $("#apiKey").value = key; }
+  if (r.base && !$("#baseUrl").value) { $("#baseUrl").value = r.base; store.set("base."+prov, r.base); }
+  h.className = "msg " + (r.bad ? "bad" : "");
+  h.textContent = r.msg || "";
+  if (prov === "custom" && !$("#baseUrl").value) $("#baseUrl").focus();
 }
 $$("#provBtns button").forEach(b => b.onclick = () => setProv(b.dataset.p));
 $("#baseUrl").oninput = e => store.set("base."+prov, e.target.value);
-$("#apiKey").oninput = () => { if ($("#remember").checked) store.set("key."+prov, $("#apiKey").value); };
+$("#apiKey").oninput = () => {
+  const k = $("#apiKey").value.trim();
+  applyKeyRule(k);
+  if ($("#remember").checked) store.set("key."+prov, k);
+};
 $("#remember").onchange = e => store.set("key."+prov, e.target.checked ? $("#apiKey").value : "");
 $("#eye").onclick = () => { const i = $("#apiKey"); i.type = i.type === "password" ? "text" : "password"; };
 
@@ -317,11 +346,14 @@ function cfg(){
 $("#checkBtn").onclick = async () => {
   const c = cfg(), m = $("#checkMsg");
   if (mode === "api" && !c.key) { m.className = "msg bad"; m.textContent = "Вставьте ключ"; return; }
+  if (mode === "api" && prov === "custom" && !c.base_url) { m.className = "msg bad"; m.textContent = "Укажите адрес API сервиса, который выдал ключ"; return; }
   m.className = "msg"; m.textContent = "Проверяю…"; $("#checkBtn").disabled = true;
   try {
     const r = await api("/api/check", c);
     if (r.models?.length) fillModels(r.models);
     const parts = [];
+    if (r.detected) parts.push(`протокол: ${r.detected.variant}`);
+    if (!r.detected && r.tries?.length) parts.push("перепробовал варианты:\n" + r.tries.map(t => `• ${t.variant} — ${t.error}`).join("\n"));
     if (r.models) parts.push(`моделей доступно: ${r.models.length}`);
     if (r.ok === true && r.ping_sec != null) parts.push(`ответ за ${r.ping_sec} с` + (r.served_model ? ` · отвечает ${r.served_model}` : ""));
     if (r.ok === false) parts.push(r.error || r.models_error || "ошибка");
@@ -340,6 +372,7 @@ $$(".cat").forEach(b => b.onclick = () => { const k = b.dataset.c; cats = cats.i
 /* ---------- run ---------- */
 $("#runBtn").onclick = async () => {
   const c = cfg();
+  if (mode === "api" && prov === "custom" && !c.base_url) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Укажите адрес API сервиса, который выдал ключ"; return; }
   if (mode === "api" && (!c.key || !c.model)) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Нужны ключ и модель"; return; }
   if (!cats.length) return;
   resetView(c);

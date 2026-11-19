@@ -20,18 +20,25 @@ def env_info():
 
 
 def check_key(cfg):
-    cl = bench.Client(cfg["provider"], cfg.get("base_url"), cfg.get("key"), cfg.get("model"), 64, 60)
     res = {}
+    if cfg["provider"] == "auto":
+        found, tries = bench.detect(cfg.get("base_url"), cfg.get("key"), cfg.get("model"))
+        res["tries"] = tries
+        if not found:
+            return {**res, "ok": False, "error": "Не удалось подобрать протокол"}
+        res["detected"] = found
+        cfg = {**cfg, **found}
+    cl = bench.Client(cfg["provider"], cfg.get("base_url"), cfg.get("key"), cfg.get("model"), 64, 60, auth=cfg.get("auth"), retries=0)
     try:
         res["models"] = cl.models()
     except Exception as e:
-        res["models_error"] = str(e)[:300]
+        res["models_error"] = bench.explain(e, cl.base)
     if cfg.get("model") or cfg["provider"] in bench.CLI_PROVIDERS:
         try:
             r = cl.chat("Ответь одним словом: ok", max_tokens=32)
             res.update(ok=True, ping_sec=r["sec"], reply=r["text"][:60], served_model=r["served_model"])
         except Exception as e:
-            res.update(ok=False, error=str(e)[:400])
+            res.update(ok=False, error=bench.explain(e, cl.base))
     else:
         res["ok"] = "models" in res
     return res

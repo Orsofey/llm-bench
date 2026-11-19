@@ -27,10 +27,64 @@ CLI_PROVIDERS = {"claude-cli": "claude", "codex-cli": "codex"}
 CLI_SYSTEM = "Ты полезный ассистент. Отвечай строго в запрошенном формате, без лишнего текста."
 
 
+def explain(err, base=""):
+    """Человеческое объяснение ошибки API."""
+    code, body = getattr(err, "code", None), str(getattr(err, "body", err))
+    low = body.lower()
+    if code == 401 or "invalid x-api-key" in low or "invalid api key" in low or "incorrect api key" in low:
+        return "Ключ не принят (401): ключ неверный, отозван или от другого сервиса — проверьте адрес API."
+    if code == 403 and "api.anthropic.com" in base:
+        return ("Anthropic отклонил запрос (403): обычно это блокировка региона (нужен VPN) "
+                "или ключ не от Anthropic. Если ключ выдал другой сервис — выберите «Другой сервис» и укажите его адрес API.")
+    if code == 403:
+        return "Доступ запрещён (403): ключ без прав на эту модель, регион заблокирован или ключ от другого сервиса."
+    if code == 402 or "insufficient" in low or "quota" in low or "balance" in low or "credit" in low:
+        return "Нет средств или исчерпана квота на ключе."
+    if code == 404:
+        return "Не найдено (404): неверный адрес API или название модели."
+    if code == 429:
+        return "Слишком много запросов (429): лимит ключа, попробуйте позже или уменьшите «Параллельно»."
+    if code == 0:
+        return "Сервер недоступен: проверьте адрес API, интернет или VPN."
+    if code == -1:
+        return body
+    return f"HTTP {code}: {body[:300]}"
+
+
+def detect(base_url, key, model=None, timeout=30):
+    """Подбирает протокол для неизвестного сервиса: OpenAI-совместимый или Anthropic-совместимый,
+    авторизация Bearer или x-api-key, с /v1 и без. Возвращает (cfg|None, попытки)."""
+    base = (base_url or "").rstrip("/")
+    if not base:
+        return None, [{"variant": "—", "error": "Укажите адрес API сервиса, который выдал ключ"}]
+    bases = [base] if base.endswith("/v1") else [base, base + "/v1"]
+    variants = [("openai", b, "bearer") for b in bases] + [("anthropic", base, "x-api-key"), ("anthropic", base, "bearer")]
+    tries = []
+    for prov, b, auth in variants:
+        cl = Client(prov, b, key, model, 32, timeout, auth=auth, retries=0)
+        name = f"{'OpenAI' if prov == 'openai' else 'Anthropic'}-совместимый, {auth}, {cl.base}"
+        try:
+            if model:
+                r = cl.chat("Ответь одним словом: ok", max_tokens=32)
+                if not r["text"] and r["out"] is None:
+                    raise ApiError(-1, "пустой ответ")
+            else:
+                ms = cl.models()
+                if not ms:
+                    raise ApiError(-1, "список моделей пуст — укажите модель")
+            return {"provider": prov, "base_url": cl.base, "auth": auth, "variant": name}, tries
+        except Exception as e:
+            tries.append({"variant": name, "error": explain(e, cl.base)})
+            if getattr(e, "code", None) == 0 and prov == "openai" and b == base:
+                break  # хост недоступен — другие варианты тоже не ответят
+    return None, tries
+
+
 class Client:
-    def __init__(self, provider, base_url, key, model, max_tokens=4096, timeout=300):
+    def __init__(self, provider, base_url, key, model, max_tokens=4096, timeout=300, auth=None, retries=3):
         self.p, self.key, self.model = provider, key, model
-        self.max_tokens, self.timeout = max_tokens, timeout
+        self.max_tokens, self.timeout, self.retries = max_tokens, timeout, retries
+        self.auth = auth or ("x-api-key" if provider == "anthropic" else "bearer")
         if provider in CLI_PROVIDERS:
             self.base = f"{CLI_PROVIDERS[provider]} CLI (подписка)"
         elif provider == "anthropic":
@@ -41,26 +95,31 @@ class Client:
     def _req(self, method, url, headers, body=None):
         data = json.dumps(body).encode() if body is not None else None
         req = urllib.request.Request(url, data, {**headers, "Content-Type": "application/json"}, method=method)
-        for attempt in range(4):
+        for attempt in range(self.retries + 1):
             try:
                 with urllib.request.urlopen(req, timeout=self.timeout) as r:
-                    return json.loads(r.read())
+                    raw = r.read()
+                try:
+                    return json.loads(raw)
+                except json.JSONDecodeError:
+                    raise ApiError(-1, "ответ не JSON (похоже, это не адрес API): " + raw[:150].decode(errors="replace"))
             except urllib.error.HTTPError as e:
                 txt = e.read().decode(errors="replace")[:800]
-                if e.code in (429, 500, 502, 503, 529) and attempt < 3:
+                if e.code in (429, 500, 502, 503, 529) and attempt < self.retries:
                     time.sleep(2 ** attempt * 3)
                     continue
                 raise ApiError(e.code, txt)
-            except (urllib.error.URLError, TimeoutError) as e:
-                if attempt < 3:
+            except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+                if attempt < self.retries:
                     time.sleep(2 ** attempt * 3)
                     continue
                 raise ApiError(0, str(e))
 
     def _headers(self):
+        h = {"x-api-key": self.key} if self.auth == "x-api-key" else {"Authorization": f"Bearer {self.key}"}
         if self.p == "anthropic":
-            return {"x-api-key": self.key, "anthropic-version": "2023-06-01"}
-        return {"Authorization": f"Bearer {self.key}"}
+            h["anthropic-version"] = "2023-06-01"
+        return h
 
     def models(self):
         if self.p in CLI_PROVIDERS:
@@ -619,7 +678,7 @@ def health(cl):
         h.update(key_ok=True, ping_sec=r["sec"], fingerprint_in_tokens=r["in"], usage_reported=r["in"] is not None,
                  served_model=r["served_model"])
     except Exception as e:
-        h.update(key_ok=False, error=str(e)[:300])
+        h.update(key_ok=False, error=explain(e, cl.base))
         return h
     try:
         r = cl.chat("Напиши 25 нумерованных строк, в каждой одно предложение о космосе.", max_tokens=1500)
@@ -687,8 +746,14 @@ def run_benchmark(cfg, emit=lambda ev: None, cancel=None):
     """cfg: provider, base_url, key, model, tag, only(list), repeat, workers, max_tokens, timeout, ctx_chars, out, skip_health.
     emit получает события: health / start / task / done / error. Возвращает путь к JSON-отчёту."""
     cancel = cancel or threading.Event()
+    if cfg["provider"] == "auto":
+        found, tries = detect(cfg.get("base_url"), cfg.get("key"), cfg.get("model"))
+        if not found:
+            emit({"type": "error", "message": "Не удалось подобрать протокол. " + "; ".join(t["error"] for t in tries[-2:])})
+            return None
+        cfg = {**cfg, **found}
     cl = Client(cfg["provider"], cfg.get("base_url"), cfg.get("key"), cfg.get("model"),
-                int(cfg.get("max_tokens") or 4096), int(cfg.get("timeout") or 300))
+                int(cfg.get("max_tokens") or 4096), int(cfg.get("timeout") or 300), auth=cfg.get("auth"))
     ctx = int(cfg.get("ctx_chars") or 0)
     tasks = TASKS + ([needle_task(ctx)] if ctx else [])
     if cfg.get("only"):
@@ -699,7 +764,7 @@ def run_benchmark(cfg, emit=lambda ev: None, cancel=None):
         h = health(cl)
         emit({"type": "health", "data": h})
         if not h.get("key_ok"):
-            emit({"type": "error", "message": "Ключ или модель не работают: " + h.get("error", "")})
+            emit({"type": "error", "message": h.get("error", "Ключ или модель не работают")})
             return None
     emit({"type": "start", "label": label, "base": cl.base, "ffmpeg": bool(FFMPEG),
           "tasks": [{"id": t["id"], "cat": t["cat"]} for t in tasks]})
@@ -736,8 +801,9 @@ def main():
     except Exception:
         pass
     ap = argparse.ArgumentParser(description="LLM benchmark")
-    ap.add_argument("--provider", choices=["openai", "anthropic", "claude-cli", "codex-cli"], default="openai",
-                    help="openai = любой OpenAI-совместимый API; claude-cli / codex-cli = через подписку")
+    ap.add_argument("--provider", choices=["openai", "anthropic", "auto", "claude-cli", "codex-cli"], default="openai",
+                    help="openai = OpenAI-совместимый API; auto = подобрать протокол по --base-url; claude-cli / codex-cli = подписка")
+    ap.add_argument("--auth", choices=["bearer", "x-api-key"], help="способ передачи ключа (по умолчанию по провайдеру)")
     ap.add_argument("--base-url")
     ap.add_argument("--key", default=os.environ.get("LLM_API_KEY"))
     ap.add_argument("--model")
