@@ -118,6 +118,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .hide{display:none!important}
 .eye{cursor:pointer;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(4,8,18,.6);color:var(--tx2)}
 .ck{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--tx2);margin-top:8px;cursor:pointer}
+.stale{margin:-4px 0 14px;padding:12px 14px;border-radius:12px;background:rgba(255,200,87,.12);border:1px solid rgba(255,200,87,.4);color:var(--mid);font-size:13.5px}
 .btn.second{width:100%;margin-top:8px;padding:11px;font-weight:600}
 
 /* --- стадии --- */
@@ -192,6 +193,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="chips" id="envChips"></div>
   </header>
 
+  <div class="stale hide" id="stale">Код обновился, а сервер работает на старой версии. Закройте окно сервера и снова запустите <b>start.bat</b>.</div>
   <nav class="tabs">
     <button class="act" data-tab="run">Прогон</button>
     <button data-tab="hist">История и сравнение</button>
@@ -268,11 +270,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <summary>Дополнительно</summary>
           <div class="adv">
             <div><label class="f">Повторов задачи</label><input class="in" id="repeat" type="number" min="1" value="1"></div>
-            <div><label class="f">Параллельно</label><input class="in" id="workers" type="number" min="1" value="4"></div>
+            <div><label class="f" title="Сколько запросов одновременно. Если сервис пишет «нет баланса» — ставьте 1">Параллельно</label><input class="in" id="workers" type="number" min="1" value="4"></div>
             <div><label class="f">Max tokens</label><input class="in" id="maxTokens" type="number" value="4096"></div>
             <div><label class="f">Контекст, символов</label><input class="in" id="ctxChars" type="number" value="80000"></div>
           </div>
-          <div class="hint">Для «думающих» моделей ставьте max tokens 16000+.</div>
+          <div class="hint">Для «думающих» моделей ставьте max tokens 16000+. Если сервис отвечает «не хватает баланса» при живом остатке — уменьшите max tokens до 1000–2000 и «Параллельно» до 1.</div>
         </details>
         <label class="ck"><input type="checkbox" id="doVerify" checked> Проверка подлинности (≈10 запросов)</label>
         <label class="ck"><input type="checkbox" id="doBehavior" checked> Поведенческий отпечаток (+24 коротких запроса)</label>
@@ -625,6 +627,10 @@ function handle(ev){
     if (ev.stage === "verify") setLive("Проверяю, та ли это модель, что заявлена");
   }
   if (ev.type === "activity") setLive(ev.text);
+  if (ev.type === "warning") {
+    const w = document.createElement("div"); w.className = "msg bad"; w.textContent = "⚠ " + ev.message;
+    $("#tokHint").after(w);
+  }
   if (ev.type === "usage") {
     countTo($("#tkReq"), ev.requests); countTo($("#tkIn"), ev.in); countTo($("#tkOut"), ev.out); countTo($("#tkAll"), ev.in + ev.out);
     if (overhead) $("#tokHint").textContent = `Из входных токенов ≈${fmt(overhead * ev.requests)} (${Math.round(100 * overhead * ev.requests / Math.max(ev.in, 1))}%) — скрытая инструкция сервиса: ≈${fmt(overhead)} на каждый запрос.`;
@@ -752,6 +758,7 @@ $("#cmpBtn").onclick = () => {
     $("#envChips").innerHTML = chip(env.claude_cli, "Claude CLI") + chip(env.codex_cli, "Codex CLI") + chip(env.ffmpeg, "ffmpeg");
     $("#stClaude").className = "st " + (env.claude_cli ? "ok" : "no"); $("#stClaude").textContent = env.claude_cli ? "найден" : "не установлен";
     $("#stCodex").className = "st " + (env.codex_cli ? "ok" : "no"); $("#stCodex").textContent = env.codex_cli ? "найден" : "не установлен";
+    $("#stale").classList.toggle("hide", !env.stale);
     $("#tiktokenHint").textContent = env.tiktoken ? "Эталоны GPT встроены (tiktoken)." : "Чтобы получить встроенные эталоны GPT, выполните: pip install tiktoken";
   } catch {}
 })();
