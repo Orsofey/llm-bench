@@ -11,6 +11,8 @@ import verify
 ROOT = Path(__file__).parent
 RESULTS = ROOT / "results"
 PORT = int(os.environ.get("LLM_BENCH_PORT", 8787))
+_WATCH = [Path(__file__).parent / n for n in ("bench.py", "verify.py", "app.py")]
+_STARTED = {str(f): f.stat().st_mtime for f in _WATCH if f.exists()}
 RUNS = {}  # id -> {"events": [], "status": "running|done|error", "cancel": Event}
 
 
@@ -18,7 +20,9 @@ def env_info():
     return {"claude_cli": bool(shutil.which("claude")), "codex_cli": bool(shutil.which("codex")),
             "ffmpeg": bool(bench.FFMPEG and bench.FFPROBE),
             "categories": sorted({t["cat"] for t in bench.TASKS} | {"context"}),
-            "tiktoken": bool(verify.builtin_refs())}
+            "tiktoken": bool(verify.builtin_refs()),
+            # код обновили (git pull), а сервер работает на старом — нужен перезапуск
+            "stale": any(f.exists() and f.stat().st_mtime != _STARTED.get(str(f)) for f in _WATCH)}
 
 
 def check_key(cfg):

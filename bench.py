@@ -39,8 +39,10 @@ def explain(err, base=""):
     srv = f" Ответ сервера: {body[:160]}" if body.strip() else ""
     if code == 403:
         return "Доступ запрещён (403): ключ без прав на эту модель, регион заблокирован или ключ от другого сервиса." + srv
-    if code == 402 or "insufficient" in low or "quota" in low or "balance" in low or "credit" in low:
-        return "Нет средств или исчерпана квота на ключе."
+    if is_balance_error(err):
+        return ("Сервис отказал: не хватает баланса на запрос. Часто это не реальный остаток, а резерв: сервис заранее "
+                "блокирует стоимость max_tokens × цену модели для каждого параллельного запроса. Уменьшите Max tokens "
+                "(1000–2000) и «Параллельно» до 1–2 или выберите модель дешевле." + srv)
     if code == 404:
         return "Не найдено (404): неверный адрес API или название модели." + srv
     if code == 429:
@@ -50,6 +52,11 @@ def explain(err, base=""):
     if code == -1:
         return body
     return f"HTTP {code}: {body[:300]}"
+
+
+def is_balance_error(err):
+    code, low = getattr(err, "code", None), str(getattr(err, "body", err)).lower()
+    return code == 402 or any(w in low for w in ("insufficient", "balance", "quota", "credit", "баланс", "средств"))
 
 
 def detect(base_url, key, model=None, timeout=30):
@@ -90,6 +97,11 @@ class Client:
         self.max_tokens, self.timeout, self.retries = max_tokens, timeout, retries
         self.auth = auth or ("x-api-key" if provider == "anthropic" else "bearer")
         self.usage = {"requests": 0, "in": 0, "out": 0, "errors": 0}
+        self.balance_streak = 0  # подряд отказов «нет баланса»
+        self.balance_retries = 0
+        self.throttled = False  # после отказа по балансу — строго по одному запросу
+        self.ok_after_throttle = 0
+        self._serial = threading.Lock()
         self.on_usage = None
         self._lock = threading.Lock()
         if provider in CLI_PROVIDERS:
@@ -192,13 +204,43 @@ class Client:
         return text, tin, tout, None
 
     def chat(self, prompt, max_tokens=None, temperature=0):
-        try:
-            r = self._chat(prompt, max_tokens, temperature)
-        except Exception:
-            self._count(0, 0, error=True)
-            raise
-        self._count(r["in"] or 0, r["out"] or 0)
-        return r
+        mt = max_tokens or self.max_tokens
+        if self.throttled:
+            mt = min(mt, 1024)
+            with self._serial:
+                return self._chat_balance(prompt, mt, temperature, retries=2)
+        return self._chat_balance(prompt, mt, temperature, retries=0, first=True)
+
+    def _chat_balance(self, prompt, mt, temperature, retries, first=False):
+        for attempt in range(retries + 1):
+            try:
+                r = self._chat(prompt, mt, temperature)
+            except ApiError as e:
+                self._count(0, 0, error=True)
+                if not is_balance_error(e):
+                    raise
+                with self._lock:
+                    self.balance_retries += 1
+                if first:
+                    # возможно, сервис резервирует max_tokens под каждый параллельный запрос:
+                    # переходим в режим «по одному запросу» с лимитом 1024 и повторяем
+                    self.throttled = True
+                    time.sleep(2)
+                    return self.chat(prompt, mt, temperature)
+                if attempt < retries:
+                    time.sleep(3 * (attempt + 1))
+                    continue
+                with self._lock:
+                    self.balance_streak += 1
+                raise
+            except Exception:
+                self._count(0, 0, error=True)
+                raise
+            self.balance_streak = 0
+            if self.throttled:
+                self.ok_after_throttle += 1
+            self._count(r["in"] or 0, r["out"] or 0)
+            return r
 
     def _count(self, tin, tout, error=False):
         with self._lock:
@@ -853,7 +895,7 @@ def run_task(cl, task, repeat):
             usage["out"] += r["out"] or 0
             usage["sec"] += r["sec"]
         except Exception as e:
-            sc, note = 0.0, f"ошибка: {str(e)[:150]}"
+            sc, note = 0.0, "ошибка: " + (explain(e)[:160] if isinstance(e, ApiError) else str(e)[:150])
         scores.append(float(sc))
         notes.append(note)
     return {"id": task["id"], "cat": task["cat"], "score": round(sum(scores) / len(scores), 3),
@@ -937,8 +979,13 @@ def run_benchmark(cfg, emit=lambda ev: None, cancel=None):
         emit({"type": "start", "label": label, "base": cl.base, "ffmpeg": bool(FFMPEG),
               "tasks": [{"id": t["id"], "cat": t["cat"], "desc": t.get("desc") or TASK_DESC.get(t["id"], "")} for t in tasks]})
 
+        skipped = []
+
         def job(t):
             if cancel.is_set():
+                return None
+            if cl.balance_streak >= 3:
+                skipped.append(t["id"])
                 return None
             emit({"type": "task_start", "id": t["id"], "desc": t.get("desc") or TASK_DESC.get(t["id"], "")})
             return run_task(cl, t, int(cfg.get("repeat") or 1))
@@ -952,7 +999,13 @@ def run_benchmark(cfg, emit=lambda ev: None, cancel=None):
         if cancel.is_set():
             emit({"type": "error", "message": "Остановлено"})
             return None
-    order = {t["id"]: i for i, t in enumerate(tasks)}
+        if skipped:
+            emit({"type": "warning", "message": f"Сервис 3 раза подряд отказал из-за баланса — {len(skipped)} задач пропущено "
+                                                "и в оценку не вошли. Уменьшите Max tokens и «Параллельно» и повторите."})
+        if cl.balance_retries and cl.ok_after_throttle:
+            emit({"type": "warning", "message": f"Сервис {cl.balance_retries} раз отказал «не хватает баланса», хотя часть запросов "
+                                                "потом прошла. Похоже, он резервирует max_tokens под каждый запрос: прогон переключён "
+                                                "на 1 запрос за раз с max_tokens=1024."})
     results.sort(key=lambda r: order.get(r["id"], 0))
     summ = summarize(results) if results else {}
     tot = dict(cl.usage)
@@ -1028,6 +1081,8 @@ def main():
             tk = ev["tokens"]
             print(f"  запросов {tk['requests']}, токены: вход {tk['in']}, выход {tk['out']}, всего {tk['in'] + tk['out']}; "
                   f"время {ev['seconds']} с; файл {ev['file']}")
+        elif t == "warning":
+            print("⚠ " + ev["message"])
         elif t == "activity":
             print("  … " + ev["text"])
         elif t == "verify":
