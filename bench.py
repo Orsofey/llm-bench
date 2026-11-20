@@ -1048,6 +1048,7 @@ def run_benchmark(cfg, emit=lambda ev: None, cancel=None):
             emit({"type": "warning", "message": f"Сервис {cl.balance_retries} раз отказал «не хватает баланса», хотя часть запросов "
                                                 "потом прошла. Похоже, он резервирует max_tokens под каждый запрос: прогон переключён "
                                                 "на 1 запрос за раз с max_tokens=1024."})
+    order = {t["id"]: i for i, t in enumerate(tasks)}
     results.sort(key=lambda r: order.get(r["id"], 0))
     summ = summarize(results) if results else {}
     tot = dict(cl.usage)

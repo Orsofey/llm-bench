@@ -5,13 +5,14 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
+import batch
 import bench
 import verify
 
 ROOT = Path(__file__).parent
 RESULTS = ROOT / "results"
 PORT = int(os.environ.get("LLM_BENCH_PORT", 8787))
-_WATCH = [Path(__file__).parent / n for n in ("bench.py", "verify.py", "app.py")]
+_WATCH = [Path(__file__).parent / n for n in ("bench.py", "verify.py", "app.py", "batch.py")]
 _STARTED = {str(f): f.stat().st_mtime for f in _WATCH if f.exists()}
 RUNS = {}  # id -> {"events": [], "status": "running|done|error", "cancel": Event}
 
@@ -50,7 +51,7 @@ def check_key(cfg):
     return res
 
 
-def start_run(cfg):
+def start_run(cfg, job="run"):
     rid = uuid.uuid4().hex[:8]
     run = {"events": [], "status": "running", "cancel": threading.Event()}
     RUNS[rid] = run
@@ -61,7 +62,10 @@ def start_run(cfg):
 
     def worker():
         try:
-            fn = bench.run_benchmark({**cfg, "out": str(RESULTS)}, emit, run["cancel"])
+            if job == "batch":
+                fn = batch.run_batch(cfg, RESULTS, emit, run["cancel"])
+            else:
+                fn = bench.run_benchmark({**cfg, "out": str(RESULTS)}, emit, run["cancel"])
             run["status"] = "done" if fn else "error"
         except Exception as e:
             emit({"type": "error", "message": str(e)[:400]})
@@ -137,6 +141,8 @@ class H(BaseHTTPRequestHandler):
             self._json({"status": run["status"], "events": run["events"][since:], "next": len(run["events"])})
         elif u.path == "/api/results":
             self._json(list_results())
+        elif u.path == "/api/batch/last":
+            self._json(batch.last_batch(RESULTS) or {})
         elif u.path == "/api/catalog":
             self._json(bench.catalog(int(q.get("ctx", 80000))))
         elif u.path == "/api/refs":
@@ -154,6 +160,11 @@ class H(BaseHTTPRequestHandler):
         u, body = urlparse(self.path), self._body()
         if u.path == "/api/check":
             self._json(check_key(body))
+        elif u.path == "/api/batch":
+            items, errors = batch.parse_lines(body.get("text"), body.get("base_url") or "")
+            if not items:
+                return self._json({"error": "Нет ни одного ключа. " + "; ".join(errors)}, 400)
+            self._json({"id": start_run(body, "batch"), "count": len(items)})
         elif u.path == "/api/run":
             self._json({"id": start_run(body)})
         elif u.path == "/api/cancel":
