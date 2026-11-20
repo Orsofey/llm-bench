@@ -63,7 +63,7 @@ details{margin-top:12px}summary{cursor:pointer;color:var(--tx2);font-size:13px}
   background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 8px 30px rgba(74,168,255,.3)}
 .btn.main:disabled{opacity:.5;cursor:default}
 .btn.ghost{background:none}.btn.sm{padding:5px 10px;font-size:12.5px}
-.msg{font-size:12.5px;margin-top:8px;color:var(--tx2);word-break:break-word}
+.msg{font-size:12.5px;margin-top:8px;color:var(--tx2);word-break:break-word;white-space:pre-line}
 .msg.ok{color:var(--ok)}.msg.bad{color:var(--bad)}
 .hint{font-size:12px;color:var(--tx3);margin-top:6px}
 .top{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
@@ -73,6 +73,18 @@ details{margin-top:12px}summary{cursor:pointer;color:var(--tx2);font-size:13px}
 .ring .v{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
 .ring .v b{font-size:34px;line-height:1}.ring .v span{font-size:11px;color:var(--tx2);text-transform:uppercase;letter-spacing:.08em}
 .bars{display:grid;gap:9px}
+.mbox{margin-top:12px;border:1px solid var(--line);border-radius:12px;background:rgba(4,8,18,.45);padding:10px}
+.mbox .hd{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--tx2);margin-bottom:8px}
+.mbox .in{padding:7px 10px;font-size:13px}
+.mlist{max-height:280px;overflow-y:auto;margin-top:8px;padding-right:2px}
+.mgrp{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 5px}
+.mgrp:first-child{margin-top:2px}
+.mchips{display:flex;flex-wrap:wrap;gap:5px}
+.mchip{font-family:var(--mono);font-size:12px;padding:4px 9px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--tx2);cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mchip:hover{border-color:var(--line2);color:var(--tx)}
+.mchip.sel{border-color:var(--ac);background:rgba(74,168,255,.16);color:var(--tx)}
+.mchip.ok::before{content:"✓ ";color:var(--ok)}.mchip.fail::before{content:"✗ ";color:var(--bad)}
+.linkbtn{background:none;border:0;color:var(--ac);cursor:pointer;font-size:12px;padding:0}
 .bar{display:grid;grid-template-columns:130px 1fr 44px;gap:10px;align-items:center;font-size:13px}
 .bar .tr{height:8px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
 .bar .fl{height:100%;border-radius:99px;width:0;transition:width .6s ease}
@@ -133,13 +145,15 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <div class="prov" id="provBtns"></div>
           <div id="baseWrap">
             <label class="f">Base URL</label>
-            <input class="in" id="baseUrl" spellcheck="false">
+            <input class="in" id="baseUrl" spellcheck="false" placeholder="https://api.сервис.com/v1">
+            <div class="hint hide" id="baseHint">Адрес API из документации или кабинета сервиса, который выдал ключ. Протокол (OpenAI или Anthropic) и способ авторизации подберутся автоматически.</div>
           </div>
           <label class="f">Ключ</label>
           <div class="row">
             <input class="in" id="apiKey" type="password" placeholder="sk-..." spellcheck="false" autocomplete="off">
             <button class="eye" id="eye" title="Показать">👁</button>
           </div>
+          <div class="msg" id="keyHint"></div>
           <label class="ck"><input type="checkbox" id="remember"> Запомнить ключ в этом браузере</label>
         </div>
 
@@ -166,6 +180,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
         <datalist id="modelList"></datalist>
         <div class="msg" id="checkMsg"></div>
+        <div class="mbox hide" id="mbox">
+          <div class="hd"><span id="mTitle"></span><button class="linkbtn" id="mOther"></button></div>
+          <input class="in" id="mSearch" placeholder="поиск модели…" spellcheck="false">
+          <div class="mlist" id="mlist"></div>
+        </div>
 
         <label class="f">Метка прогона</label>
         <input class="in" id="tag" placeholder="например: official, reseller-1">
@@ -238,7 +257,7 @@ const PROVIDERS = {
   openrouter:{name:"OpenRouter", provider:"openai", base:"https://openrouter.ai/api/v1", models:[]},
   deepseek:{name:"DeepSeek", provider:"openai", base:"https://api.deepseek.com/v1", models:["deepseek-chat","deepseek-reasoner"]},
   gemini:{name:"Gemini", provider:"openai", base:"https://generativelanguage.googleapis.com/v1beta/openai", models:[]},
-  custom:{name:"Свой URL", provider:"openai", base:"", models:[]},
+  custom:{name:"Другой сервис", provider:"auto", base:"", models:[]},
 };
 const SUB_MODELS = {"claude-cli":["default","opus","sonnet","haiku"], "codex-cli":["default"]};
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
@@ -269,6 +288,7 @@ function setMode(m){
   $("#modeSub").classList.toggle("hide", m !== "sub");
   $("#model").value = m === "api" ? store.get("model."+prov, PROVIDERS[prov].models[0] || "") : store.get("model."+sub, "default");
   fillModels(); $("#checkMsg").textContent = "";
+  allModels = []; modelStatus = {}; renderModels();
 }
 $$(".seg button").forEach(b => b.onclick = () => setMode(b.dataset.mode));
 
@@ -281,11 +301,39 @@ function setProv(k){
   $("#apiKey").value = store.get("key."+k, "");
   $("#remember").checked = !!store.get("key."+k, "");
   $("#model").value = store.get("model."+k, PROVIDERS[k].models[0] || "");
+  $("#baseHint").classList.toggle("hide", k !== "custom");
+  allModels = []; modelStatus = {}; if (typeof renderModels === "function") renderModels();
   fillModels();
 }
+
+const KEY_RULES = [
+  [/^sk-ant-oat/, {bad: true, msg: "Это токен подписки Claude, а не API-ключ — используйте вкладку «Подписка»."}],
+  [/^sk-ant-/, {prov: "anthropic", msg: "Ключ Anthropic."}],
+  [/^sk-or-/, {prov: "openrouter", msg: "Ключ OpenRouter."}],
+  [/^AIza/, {prov: "gemini", msg: "Ключ Google Gemini."}],
+  [/^sk-(proj|svcacct|admin)-/, {prov: "openai", msg: "Ключ OpenAI."}],
+  [/^gsk_/, {prov: "custom", base: "https://api.groq.com/openai/v1", msg: "Похоже на ключ Groq."}],
+  [/^xai-/, {prov: "custom", base: "https://api.x.ai/v1", msg: "Похоже на ключ xAI (Grok)."}],
+  [/^sk-[A-Za-z0-9]{20,}$/, {msg: "Формат sk-… бывает у OpenAI, DeepSeek и многих перепродавцов — проверьте, что выбран нужный сервис."}],
+];
+function applyKeyRule(key){
+  const h = $("#keyHint");
+  if (key.length < 8) { h.textContent = ""; return; }
+  const hit = KEY_RULES.find(([re]) => re.test(key));
+  const r = hit ? hit[1] : {prov: "custom", msg: "Ключ не от Anthropic / OpenAI / OpenRouter / Gemini. Укажите адрес API сервиса, который его выдал, — протокол подберётся автоматически."};
+  if (r.prov && r.prov !== prov) { setProv(r.prov); $("#apiKey").value = key; }
+  if (r.base && !$("#baseUrl").value) { $("#baseUrl").value = r.base; store.set("base."+prov, r.base); }
+  h.className = "msg " + (r.bad ? "bad" : "");
+  h.textContent = r.msg || "";
+  if (prov === "custom" && !$("#baseUrl").value) $("#baseUrl").focus();
+}
 $$("#provBtns button").forEach(b => b.onclick = () => setProv(b.dataset.p));
-$("#baseUrl").oninput = e => store.set("base."+prov, e.target.value);
-$("#apiKey").oninput = () => { if ($("#remember").checked) store.set("key."+prov, $("#apiKey").value); };
+$("#baseUrl").oninput = e => { store.set("base."+prov, e.target.value); autoCheck(); };
+$("#apiKey").oninput = () => {
+  const k = $("#apiKey").value.trim();
+  applyKeyRule(k); autoCheck();
+  if ($("#remember").checked) store.set("key."+prov, k);
+};
 $("#remember").onchange = e => store.set("key."+prov, e.target.checked ? $("#apiKey").value : "");
 $("#eye").onclick = () => { const i = $("#apiKey"); i.type = i.type === "password" ? "text" : "password"; };
 
@@ -314,23 +362,79 @@ function cfg(){
   return c;
 }
 
-$("#checkBtn").onclick = async () => {
+/* ---------- models list ---------- */
+const NON_CHAT = /embed|whisper|tts|dall-e|image|moderation|audio|realtime|transcri|rerank|search-preview|computer-use|sora|veo|imagen|lyria|aqa/i;
+const FAMILIES = [[/claude/i,"Anthropic · Claude"],[/^(gpt|o\d|chatgpt|codex)|\/(gpt|o\d)/i,"OpenAI · GPT"],[/gemini|gemma/i,"Google · Gemini"],
+  [/deepseek/i,"DeepSeek"],[/grok/i,"xAI · Grok"],[/llama/i,"Meta · Llama"],[/mistral|mixtral|codestral|magistral|devstral/i,"Mistral"],
+  [/qwen|qwq/i,"Qwen"],[/kimi|moonshot/i,"Moonshot · Kimi"],[/glm|zhipu/i,"Zhipu · GLM"],[/yandex|gigachat/i,"Российские"]];
+let allModels = [], showOther = false, modelStatus = {};
+const family = id => (FAMILIES.find(([re]) => re.test(id)) || [0, "Другие"])[1];
+function renderModels(){
+  const box = $("#mbox");
+  if (!allModels.length) { box.classList.add("hide"); return; }
+  box.classList.remove("hide");
+  const q = $("#mSearch").value.trim().toLowerCase(), cur = $("#model").value.trim();
+  const chat = allModels.filter(m => !NON_CHAT.test(m)), other = allModels.length - chat.length;
+  const list = (showOther ? allModels : chat).filter(m => !q || m.toLowerCase().includes(q));
+  $("#mTitle").textContent = `Доступно моделей: ${chat.length}` + (other ? ` (+${other} не текстовых)` : "");
+  $("#mOther").textContent = other ? (showOther ? "скрыть не текстовые" : "показать все") : "";
+  const groups = {};
+  list.forEach(m => (groups[family(m)] ||= []).push(m));
+  const order = [...FAMILIES.map(f => f[1]), "Другие"];
+  $("#mlist").innerHTML = Object.keys(groups).sort((a, b) => order.indexOf(a) - order.indexOf(b))
+    .map(g => `<div class="mgrp">${g} · ${groups[g].length}</div><div class="mchips">` +
+      groups[g].sort().reverse().map(m => `<button class="mchip ${m === cur ? "sel" : ""} ${modelStatus[m] || ""}" data-m="${esc(m)}" title="${esc(m)}">${esc(m)}</button>`).join("") + "</div>").join("")
+    || `<div class="hint">Ничего не найдено</div>`;
+  $$("#mlist .mchip").forEach(b => b.onclick = () => {
+    $("#model").value = b.dataset.m; store.set("model."+(mode === "api" ? prov : sub), b.dataset.m);
+    renderModels(); doCheck(true);
+  });
+}
+$("#mSearch").oninput = renderModels;
+$("#mOther").onclick = () => { showOther = !showOther; renderModels(); };
+
+/* ---------- check ---------- */
+let checking = false, lastAuto = "";
+async function doCheck(quiet){
   const c = cfg(), m = $("#checkMsg");
-  if (mode === "api" && !c.key) { m.className = "msg bad"; m.textContent = "Вставьте ключ"; return; }
-  m.className = "msg"; m.textContent = "Проверяю…"; $("#checkBtn").disabled = true;
+  if (mode === "api" && !c.key) { if (!quiet) { m.className = "msg bad"; m.textContent = "Вставьте ключ"; } return; }
+  if (mode === "api" && prov === "custom" && !c.base_url) { if (!quiet) { m.className = "msg bad"; m.textContent = "Укажите адрес API сервиса, который выдал ключ"; } return; }
+  if (checking) return;
+  checking = true; $("#checkBtn").disabled = true;
+  m.className = "msg"; m.textContent = c.model ? `Проверяю ${c.model}…` : "Проверяю ключ и загружаю список моделей…";
   try {
     const r = await api("/api/check", c);
-    if (r.models?.length) fillModels(r.models);
+    if (r.models) { allModels = r.models; fillModels(r.models); }
+    if (c.model && r.ping_sec != null) modelStatus[c.model] = "ok";
+    else if (c.model && r.ok === false) modelStatus[c.model] = "fail";
+    renderModels();
     const parts = [];
-    if (r.models) parts.push(`моделей доступно: ${r.models.length}`);
-    if (r.ok === true && r.ping_sec != null) parts.push(`ответ за ${r.ping_sec} с` + (r.served_model ? ` · отвечает ${r.served_model}` : ""));
+    if (r.detected) parts.push(`протокол: ${r.detected.variant}`);
+    if (!r.detected && r.tries?.length) parts.push("перепробовал варианты:\n" + r.tries.map(t => `• ${t.variant} — ${t.error}`).join("\n"));
+    if (r.ok === true && r.ping_sec != null) parts.push(`${c.model} отвечает за ${r.ping_sec} с` + (r.served_model && r.served_model !== c.model ? ` · сервер называет модель: ${r.served_model}` : ""));
     if (r.ok === false) parts.push(r.error || r.models_error || "ошибка");
     else if (!r.models && r.models_error && r.ping_sec == null) parts.push(r.models_error);
+    if (r.ok && !c.model) parts.push(r.models?.length ? "ключ работает — выберите модель из списка ниже" : "ключ работает, но сервис не отдаёт список моделей — впишите название вручную");
+    if (r.ok && c.model && !r.models && r.models_error) parts.push("список моделей сервис не отдаёт");
     m.className = "msg " + (r.ok ? "ok" : "bad");
-    m.textContent = (r.ok ? "✓ " : "✗ ") + (parts.join(" · ") || (r.ok ? "ключ работает — выберите модель" : "не удалось"));
+    m.textContent = (r.ok ? "✓ " : "✗ ") + (parts.join("\n") || (r.ok ? "ключ работает" : "не удалось"));
   } catch (e) { m.className = "msg bad"; m.textContent = "Сервер недоступен"; }
-  $("#checkBtn").disabled = false;
-};
+  checking = false; $("#checkBtn").disabled = false;
+}
+$("#checkBtn").onclick = () => doCheck(false);
+
+// автопроверка: вставили ключ (и адрес для «Другого сервиса») — сразу грузим модели
+let autoTimer;
+function autoCheck(){
+  clearTimeout(autoTimer);
+  autoTimer = setTimeout(() => {
+    const k = $("#apiKey").value.trim(), sig = prov + "|" + $("#baseUrl").value.trim() + "|" + k;
+    if (mode !== "api" || k.length < 16 || sig === lastAuto || (prov === "custom" && !$("#baseUrl").value.trim())) return;
+    lastAuto = sig; allModels = []; modelStatus = {}; renderModels();
+    if (!PROVIDERS[prov].models.includes($("#model").value)) $("#model").value = "";
+    doCheck(true);
+  }, 700);
+}
 
 /* ---------- categories ---------- */
 $("#cats").innerHTML = Object.entries(CAT).map(([k,v]) => `<button class="cat" data-c="${k}">${v}</button>`).join("");
@@ -340,6 +444,7 @@ $$(".cat").forEach(b => b.onclick = () => { const k = b.dataset.c; cats = cats.i
 /* ---------- run ---------- */
 $("#runBtn").onclick = async () => {
   const c = cfg();
+  if (mode === "api" && prov === "custom" && !c.base_url) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Укажите адрес API сервиса, который выдал ключ"; return; }
   if (mode === "api" && (!c.key || !c.model)) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Нужны ключ и модель"; return; }
   if (!cats.length) return;
   resetView(c);
