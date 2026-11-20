@@ -12,6 +12,7 @@ LLM-бенчмарк: проверка ключа/провайдера + кач�
 """
 import argparse, json, os, re, random, shlex, shutil, subprocess, sys, tempfile, threading, time
 import urllib.request, urllib.error
+import local
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -93,7 +94,7 @@ def detect(base_url, key, model=None, timeout=30):
 
 class Client:
     def __init__(self, provider, base_url, key, model, max_tokens=4096, timeout=300, auth=None, retries=3):
-        self.p, self.key, self.model = provider, key, model
+        self.p, self.key, self.model = provider, key or "local", model
         self.max_tokens, self.timeout, self.retries = max_tokens, timeout, retries
         self.auth = auth or ("x-api-key" if provider == "anthropic" else "bearer")
         self.usage = {"requests": 0, "in": 0, "out": 0, "errors": 0}
@@ -116,7 +117,7 @@ class Client:
         req = urllib.request.Request(url, data, {**headers, "Content-Type": "application/json"}, method=method)
         for attempt in range(self.retries + 1):
             try:
-                with urllib.request.urlopen(req, timeout=self.timeout) as r:
+                with local.urlopen(req, self.timeout) as r:
                     raw = r.read()
                 try:
                     return json.loads(raw)
