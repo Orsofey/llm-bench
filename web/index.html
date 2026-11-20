@@ -604,9 +604,10 @@ function cfg(){
     max_tokens: +$("#maxTokens").value || 4096, ctx_chars: cats.includes("context") ? (+$("#ctxChars").value || 0) : 0,
     claimed: $("#claimed").value.trim(), verify: $("#doVerify").checked, behavior: $("#doBehavior").checked,
     save_ref: $("#saveRef").checked ? ($("#refName").value.trim() || ($("#claimed").value.trim() || $("#model").value.trim()) + " (официальный)") : ""};
-  if (mode === "api") Object.assign(c, {provider: PROVIDERS[prov].provider, base_url: $("#baseUrl").value.trim(), key: $("#apiKey").value.trim()});
-  if (mode === "api" && prov === "local") Object.assign(c, {timeout: 900, key: c.key || "local"});
-  else c.provider = sub;
+  if (mode === "api") {
+    Object.assign(c, {provider: PROVIDERS[prov].provider, base_url: $("#baseUrl").value.trim(), key: $("#apiKey").value.trim()});
+    if (prov === "local") Object.assign(c, {timeout: 900, key: c.key || "local"});
+  } else c.provider = sub;
   return c;
 }
 
