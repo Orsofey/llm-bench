@@ -12,7 +12,7 @@ LLM-бенчмарк: проверка ключа/провайдера + кач�
 """
 import argparse, json, os, re, random, shlex, shutil, subprocess, sys, tempfile, threading, time
 import urllib.request, urllib.error
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 
@@ -89,6 +89,9 @@ class Client:
         self.p, self.key, self.model = provider, key, model
         self.max_tokens, self.timeout, self.retries = max_tokens, timeout, retries
         self.auth = auth or ("x-api-key" if provider == "anthropic" else "bearer")
+        self.usage = {"requests": 0, "in": 0, "out": 0, "errors": 0}
+        self.on_usage = None
+        self._lock = threading.Lock()
         if provider in CLI_PROVIDERS:
             self.base = f"{CLI_PROVIDERS[provider]} CLI (подписка)"
         elif provider == "anthropic":
@@ -189,8 +192,28 @@ class Client:
         return text, tin, tout, None
 
     def chat(self, prompt, max_tokens=None, temperature=0):
+        try:
+            r = self._chat(prompt, max_tokens, temperature)
+        except Exception:
+            self._count(0, 0, error=True)
+            raise
+        self._count(r["in"] or 0, r["out"] or 0)
+        return r
+
+    def _count(self, tin, tout, error=False):
+        with self._lock:
+            self.usage["requests"] += 1
+            self.usage["in"] += tin
+            self.usage["out"] += tout
+            self.usage["errors"] += int(error)
+            snap = dict(self.usage)
+        if self.on_usage:
+            self.on_usage(snap)
+
+    def _chat(self, prompt, max_tokens=None, temperature=0):
         mt = max_tokens or self.max_tokens
         t0 = time.time()
+        meta = None
         if self.p in CLI_PROVIDERS:
             text, tin, tout, served = (self._claude_cli if self.p == "claude-cli" else self._codex_cli)(prompt)
         elif self.p == "anthropic":
@@ -208,6 +231,7 @@ class Client:
             text = "".join(b.get("text", "") for b in d.get("content", []) if b.get("type") == "text")
             u = d.get("usage") or {}
             tin, tout, served = u.get("input_tokens"), u.get("output_tokens"), d.get("model")
+            meta = {"id": d.get("id"), "type": d.get("type"), "stop_reason": d.get("stop_reason"), "usage_keys": sorted(u)}
         else:
             body = {"model": self.model, "max_tokens": mt, "temperature": temperature,
                     "messages": [{"role": "user", "content": prompt}]}
@@ -226,8 +250,10 @@ class Client:
             text = c if isinstance(c, str) else "".join(x.get("text", "") for x in c)
             u = d.get("usage") or {}
             tin, tout, served = u.get("prompt_tokens"), u.get("completion_tokens"), d.get("model")
+            meta = {"id": d.get("id"), "object": d.get("object"), "system_fingerprint": d.get("system_fingerprint"),
+                    "finish_reason": d["choices"][0].get("finish_reason"), "usage_keys": sorted(u)}
         text = re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()
-        return {"text": text, "in": tin, "out": tout, "sec": round(time.time() - t0, 2), "served_model": served}
+        return {"text": text, "in": tin, "out": tout, "sec": round(time.time() - t0, 2), "served_model": served, "meta": meta}
 
 
 # ======================= helpers =======================
@@ -651,6 +677,119 @@ TASKS += [
 ]
 
 
+# ======================= HARD (разделяют сильные и слабые модели) =======================
+def chk_json_fields(expected):
+    def f(t):
+        d = extract_json(t)
+        if not isinstance(d, dict):
+            return 0.0, "нет JSON"
+        ok = [k for k, v in expected.items() if str(d.get(k, "")).strip().lower() == str(v).lower()]
+        return len(ok) / len(expected), f"верно: {ok} из {list(expected)}"
+    return f
+
+
+def chk_primes(t):
+    nums = [int(x) for x in re.findall(r"\d+", t)]
+    exp = [101, 103, 107, 109, 113, 127, 131, 137, 139, 149]
+    return float(nums == exp), f"ответ {nums}"
+
+
+def chk_word_count(n):
+    def f(t):
+        line = t.strip().splitlines()[0] if t.strip() else ""
+        words = re.findall(r"[\wё-]+", line, re.I)
+        ok = len(words) == n and not re.search(r"\d", line) and len(t.strip().splitlines()) == 1
+        return float(ok), f"слов {len(words)}"
+    return f
+
+
+TASKS += [
+    code_task("hard_calc",
+              "Напиши функцию calc(expr: str) -> float — калькулятор без eval: числа (целые и дробные), + - * /, "
+              "^ (степень, правоассоциативная: 2^3^2 = 512), унарный минус (приоритет ниже степени: -2^2 = -4), скобки, пробелы. "
+              "Деление на ноль → ZeroDivisionError, некорректное выражение → ValueError.",
+              ["calc('2+3*4')==14", "calc('(2+3)*4')==20", "calc('2^3^2')==512", "calc('-2^2')==-4", "calc('2*-3')==-6",
+               "calc('10/4')==2.5", "calc(' 1 - - 1 ')==2", "abs(calc('1.5*2^-1')-0.75)<1e-9",
+               "_raises(lambda: calc('1/0'), ZeroDivisionError)", "_raises(lambda: calc('2+'), ValueError)",
+               "_raises(lambda: calc('(1'), ValueError)", "_raises(lambda: calc('1 2'), ValueError)"]),
+    code_task("hard_wildcard",
+              "Напиши функцию wildcard(pattern: str, s: str) -> bool: '?' — любой один символ, '*' — любая "
+              "последовательность (в том числе пустая), совпадение со всей строкой. Должна работать быстро на длинных шаблонах.",
+              ["wildcard('a*b','ab')", "wildcard('a*b','axxb')", "not wildcard('a*b','axxc')", "wildcard('?','x')",
+               "not wildcard('?','')", "wildcard('*','')", "wildcard('**a**','a')", "not wildcard('a','aa')",
+               "not wildcard('a*'*20+'b','a'*60)", "wildcard('*a*b*c*','xxaxxbxxc')"]),
+    code_task("hard_parse_srt",
+              "Напиши функцию parse_srt(text: str) -> list[tuple[int, float, float, str]]: разбор SRT-файла. "
+              "Учесть BOM, переводы строк \\r\\n, лишние пустые строки, миллисекунды через запятую или точку. "
+              "Многострочный текст блока склеивать через '\\n'. Битые блоки (нет таймкода) пропускать.",
+              ["parse_srt('1\\n00:00:01,000 --> 00:00:02,500\\nПривет\\n')==[(1,1.0,2.5,'Привет')]",
+               "parse_srt('\\ufeff1\\r\\n00:00:01,000 --> 00:00:02,000\\r\\nА\\r\\nБ\\r\\n\\r\\n')==[(1,1.0,2.0,'А\\nБ')]",
+               "parse_srt('1\\n00:01:00.250 --> 00:01:01.000\\nX\\n\\n\\n\\n2\\n00:01:02,000 --> 00:01:03,000\\nY')"
+               "==[(1,60.25,61.0,'X'),(2,62.0,63.0,'Y')]",
+               "parse_srt('1\\nбез таймкода\\n\\n2\\n00:00:00,000 --> 00:00:01,000\\nок')==[(2,0.0,1.0,'ок')]",
+               "parse_srt('')==[]"]),
+    {"id": "hard_letters", "cat": "hard", "check": chk_number(7, 0),
+     "prompt": "Сколько букв «о» в слове «обороноспособность»? Ответь только числом."},
+    {"id": "hard_multiply", "cat": "hard",
+     "check": lambda t: chk_number(14272771, 0)(re.sub(r"(?<=\d)[\s,\u00a0\u202f](?=\d)", "", t)),
+     "prompt": "Сколько будет 4817 × 2963? Ответь только числом, без пробелов."},
+    {"id": "hard_weekday", "cat": "hard", "check": lambda t: (float("суббот" in t.lower()), t[:40]),
+     "prompt": "Какой день недели будет 1 марта 2031 года? Ответь одним словом."},
+    {"id": "hard_primes", "cat": "hard", "check": chk_primes,
+     "prompt": "Перечисли все простые числа строго между 100 и 150 через запятую по возрастанию. Только числа."},
+    {"id": "hard_puzzle", "cat": "hard",
+     "check": chk_json_fields({"premiere": "Вика", "minutes": 20, "final_cut": "Глеб"}),
+     "prompt": "Аня, Борис, Вика и Глеб монтируют по одному ролику в разных программах (Premiere, CapCut, DaVinci, Final Cut), "
+               "длительность роликов разная: 5, 10, 15 и 20 минут.\n1) Аня не работает ни в CapCut, ни в Premiere.\n"
+               "2) Ролик из DaVinci длиннее ролика Бориса.\n3) Ролик Вики на 10 минут длиннее ролика из CapCut.\n"
+               "4) Глеб не работает в DaVinci, и его ролик не 20 минут.\n5) Ролик из Final Cut длится 5 минут.\n"
+               "6) Ролик Ани длиннее ролика Глеба.\n7) Борис не работает в Final Cut.\n"
+               "Кто работает в Premiere, сколько минут его ролик и кто работает в Final Cut? "
+               "Верни только JSON {\"premiere\": имя, \"minutes\": число, \"final_cut\": имя}."},
+    {"id": "hard_family", "cat": "hard", "check": chk_number(7, 0),
+     "prompt": "В семье у каждого из 4 сыновей ровно 3 сестры. Сколько всего детей в семье? Ответь только числом."},
+    {"id": "hard_13_words", "cat": "hard", "check": chk_word_count(13),
+     "prompt": "Напиши одно предложение о монтаже видео ровно из 13 слов, без цифр, одной строкой. Только предложение."},
+]
+for _t in TASKS:
+    if _t["id"].startswith("hard_"):
+        _t["cat"] = "hard"
+
+TASK_DESC = {
+    "code_parse_duration": "Пишет парсер длительности «1h 2m 3s» — код запускается на 7 тестах",
+    "code_merge_intervals": "Объединяет пересекающиеся отрезки — 6 тестов",
+    "code_lru": "Реализует LRU-кэш за O(1) — 6 тестов",
+    "code_bugfix": "Находит и исправляет баг в функции — 5 тестов",
+    "code_srt_time": "Переводит секунды в таймкод SRT и обратно — 6 тестов",
+    "code_top_words": "Считает частотность слов с кириллицей — 5 тестов",
+    "montage_ffmpeg_vertical": "Пишет команду ffmpeg для вертикали 9:16 — реально рендерим и проверяем ffprobe",
+    "montage_ffmpeg_subs_loud": "Команда ffmpeg: вшить субтитры и громкость −14 LUFS",
+    "montage_cutlist": "Отбирает удачные дубли по расшифровке",
+    "montage_srt": "Собирает субтитры SRT из слов с таймингами",
+    "montage_timecode_remap": "Пересчитывает таймкод после склейки",
+    "agent_chrome_search": "Голосовая команда → открыть Chrome и найти погоду",
+    "agent_volume": "Голосовая команда → громкость 30%",
+    "agent_dangerous": "Опасная команда «удали всё» → должен спросить подтверждение",
+    "agent_hotkey": "Распознаёт «контрол шифт тэ» как горячие клавиши",
+    "agent_telegram": "Открыть Telegram и написать сообщение",
+    "funnel_metrics": "Считает CTR, CR, CPA, ROMI по воронке",
+    "funnel_anomaly": "Находит день с просевшей конверсией",
+    "funnel_grounding": "Отвечает строго по тексту, не выдумывает",
+    "instruct_list3": "Строгий формат: ровно 3 пункта по-русски",
+    "instruct_strict_json": "Чистый JSON без мусора",
+    "hard_calc": "Калькулятор с приоритетами и степенью без eval — 12 тестов",
+    "hard_wildcard": "Сопоставление по шаблону * и ? — с тестом на скорость",
+    "hard_parse_srt": "Устойчивый парсер SRT: BOM, \\r\\n, битые блоки",
+    "hard_letters": "Считает буквы «о» в «обороноспособность»",
+    "hard_multiply": "Умножает 4817 × 2963 в уме",
+    "hard_weekday": "Определяет день недели 1 марта 2031",
+    "hard_primes": "Перечисляет простые числа от 100 до 150",
+    "hard_puzzle": "Логическая задача на 4 человека и 7 условий",
+    "hard_family": "Задача-ловушка про сыновей и сестёр",
+    "hard_13_words": "Предложение ровно из 13 слов",
+}
+
+
 # ======================= LONG CONTEXT =======================
 def needle_task(chars):
     rnd = random.Random(42)
@@ -662,6 +801,7 @@ def needle_task(chars):
     sents.insert(int(len(sents) * 0.7), "Секретный код проекта: ZX-4817.")
     prompt = " ".join(sents) + "\n\nКакой секретный код проекта упомянут в тексте? Ответь только кодом."
     return {"id": f"context_needle_{chars // 1000}k", "cat": "context", "prompt": prompt,
+            "desc": f"Ищет секретный код в тексте на {chars // 1000} тыс. символов",
             "check": lambda t: (float("ZX-4817" in t), t[:40])}
 
 
@@ -703,9 +843,10 @@ def health(cl):
 
 # ======================= RUNNER =======================
 def run_task(cl, task, repeat):
-    scores, notes, usage = [], [], {"in": 0, "out": 0, "sec": 0.0}
+    scores, notes, usage = [], [], {"in": 0, "out": 0, "sec": 0.0, "requests": 0}
     for _ in range(repeat):
         try:
+            usage["requests"] += 1
             r = cl.chat(task["prompt"])
             sc, note = task["check"](r["text"])
             usage["in"] += r["in"] or 0
@@ -763,6 +904,12 @@ def run_benchmark(cfg, emit=lambda ev: None, cancel=None):
     if cfg.get("only"):
         tasks = [t for t in tasks if t["cat"] in cfg["only"]]
     label = f"{cfg.get('model') or 'default'}{' [' + cfg['tag'] + ']' if cfg.get('tag') else ''}"
+    out = Path(cfg.get("out") or Path(__file__).parent / "results")
+    t_start = time.time()
+    cl.on_usage = lambda u: emit({"type": "usage", **u})
+    emit({"type": "stage", "stage": "connect", "label": label, "base": cl.base,
+          "plan": ["connect"] + (["verify"] if cfg.get("verify", True) else []) + (["tasks"] if tasks else []) + ["done"]})
+    emit({"type": "activity", "text": "Проверяю ключ, задержку и скорость генерации"})
     h = {}
     if not cfg.get("skip_health"):
         h = health(cl)
@@ -770,31 +917,63 @@ def run_benchmark(cfg, emit=lambda ev: None, cancel=None):
         if not h.get("key_ok"):
             emit({"type": "error", "message": h.get("error", "Ключ или модель не работают")})
             return None
-    emit({"type": "start", "label": label, "base": cl.base, "ffmpeg": bool(FFMPEG),
-          "tasks": [{"id": t["id"], "cat": t["cat"]} for t in tasks]})
 
-    def job(t):
-        return None if cancel.is_set() else run_task(cl, t, int(cfg.get("repeat") or 1))
-
-    t0, results = time.time(), []
-    with ThreadPoolExecutor(int(cfg.get("workers") or 4)) as ex:
-        for r in ex.map(job, tasks):
-            if r:
-                results.append(r)
-                emit({"type": "task", "data": r})
+    ver = None
+    if cfg.get("verify", True) and cl.p not in CLI_PROVIDERS:
+        import verify as V
+        emit({"type": "stage", "stage": "verify"})
+        ver = V.run_verify(cl, cl.p, out, cfg.get("claimed") or cfg.get("model"), bool(cfg.get("behavior", True)), h, emit)
+        if cfg.get("save_ref") and ver["fingerprint"].get("ok"):
+            ver["verdict"].update(level="ref", text=f"Этот прогон сохраняется как эталон «{cfg['save_ref']}». "
+                                                     "С ним будут сравниваться другие ключи.")
+        emit({"type": "verify", "data": ver})
     if cancel.is_set():
         emit({"type": "error", "message": "Остановлено"})
         return None
-    summ = summarize(results)
-    tot = {"in": sum(r["in"] for r in results), "out": sum(r["out"] for r in results)}
-    out = Path(cfg.get("out") or Path(__file__).parent / "results")
+
+    results = []
+    if tasks:
+        emit({"type": "stage", "stage": "tasks"})
+        emit({"type": "start", "label": label, "base": cl.base, "ffmpeg": bool(FFMPEG),
+              "tasks": [{"id": t["id"], "cat": t["cat"], "desc": t.get("desc") or TASK_DESC.get(t["id"], "")} for t in tasks]})
+
+        def job(t):
+            if cancel.is_set():
+                return None
+            emit({"type": "task_start", "id": t["id"], "desc": t.get("desc") or TASK_DESC.get(t["id"], "")})
+            return run_task(cl, t, int(cfg.get("repeat") or 1))
+
+        with ThreadPoolExecutor(int(cfg.get("workers") or 4)) as ex:
+            for f in as_completed([ex.submit(job, t) for t in tasks]):
+                r = f.result()
+                if r:
+                    results.append(r)
+                    emit({"type": "task", "data": r})
+        if cancel.is_set():
+            emit({"type": "error", "message": "Остановлено"})
+            return None
+    order = {t["id"]: i for i, t in enumerate(tasks)}
+    results.sort(key=lambda r: order.get(r["id"], 0))
+    summ = summarize(results) if results else {}
+    tot = dict(cl.usage)
+    t0 = t_start
     out.mkdir(parents=True, exist_ok=True)
     safe = re.sub(r"[^\w.-]", "_", label)
-    fn = out / f"{safe}_{time.strftime('%Y%m%d_%H%M%S')}.json"
+    fn = out / f"{safe}_{time.strftime('%Y%m%d_%H%M%S')}_{os.urandom(2).hex()}.json"
     fn.write_text(json.dumps({"label": label, "provider": cfg["provider"], "base_url": cl.base, "model": cfg.get("model"),
+                              "claimed": cfg.get("claimed") or cfg.get("model"),
                               "date": time.strftime("%Y-%m-%d %H:%M"), "health": h, "summary": summ, "tokens": tot,
+                              "verify": ver, "file": fn.name,
                               "seconds": round(time.time() - t0), "tasks": results}, ensure_ascii=False, indent=1),
                   encoding="utf-8")
+    if cfg.get("save_ref"):
+        import verify as V
+        try:
+            V.save_ref(out, json.loads(fn.read_text(encoding="utf-8")), cfg["save_ref"])
+            emit({"type": "activity", "text": f"Сохранено как эталон: {cfg['save_ref']}"})
+        except Exception as e:
+            emit({"type": "activity", "text": f"Эталон не сохранён: {e}"})
+    emit({"type": "stage", "stage": "done"})
     emit({"type": "done", "summary": summ, "tokens": tot, "seconds": round(time.time() - t0), "file": fn.name})
     return fn
 
@@ -814,6 +993,10 @@ def main():
     ap.add_argument("--tag", default="", help="метка запуска, напр. official / reseller")
     ap.add_argument("--only", help="категории через запятую: code,montage,agent,funnel,instruct,context")
     ap.add_argument("--skip-health", action="store_true")
+    ap.add_argument("--claimed", help="заявленная модель для проверки подлинности, напр. 'Claude Opus'")
+    ap.add_argument("--no-verify", dest="verify", action="store_false", help="без проверки подлинности")
+    ap.add_argument("--no-behavior", dest="behavior", action="store_false", help="без поведенческого отпечатка")
+    ap.add_argument("--save-ref", metavar="ИМЯ", help="сохранить прогон как эталон (для официального ключа)")
     ap.add_argument("--repeat", type=int, default=1, help="прогонов каждой задачи (для усреднения)")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--max-tokens", type=int, default=4096, help="для reasoning-моделей ставь 16000+")
@@ -842,7 +1025,19 @@ def main():
             print("\n== Итог (0–100):")
             for k, v in ev["summary"].items():
                 print(f"  {k:10} {v}")
-            print(f"  токены: in {ev['tokens']['in']}, out {ev['tokens']['out']}; время {ev['seconds']} с; файл {ev['file']}")
+            tk = ev["tokens"]
+            print(f"  запросов {tk['requests']}, токены: вход {tk['in']}, выход {tk['out']}, всего {tk['in'] + tk['out']}; "
+                  f"время {ev['seconds']} с; файл {ev['file']}")
+        elif t == "activity":
+            print("  … " + ev["text"])
+        elif t == "verify":
+            v = ev["data"]["verdict"]
+            print(f"\n== Подлинность: {v['level'].upper()} — {v['text']}")
+            for c in v["checks"]:
+                print(f"  [{c['level']:4}] {c['name']}: {c['text']}")
+            fp = ev["data"].get("fingerprint") or {}
+            if fp.get("deltas"):
+                print("  отпечаток токенизатора:", fp["deltas"])
         elif t == "error":
             print("!! " + ev["message"])
 

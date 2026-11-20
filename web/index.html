@@ -118,6 +118,71 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .hide{display:none!important}
 .eye{cursor:pointer;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(4,8,18,.6);color:var(--tx2)}
 .ck{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--tx2);margin-top:8px;cursor:pointer}
+.btn.second{width:100%;margin-top:8px;padding:11px;font-weight:600}
+
+/* --- стадии --- */
+.stages{display:flex;align-items:center;gap:0;margin-bottom:18px}
+.stage{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--tx3);white-space:nowrap}
+.stage .ic{position:relative;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line2);font-size:12px;font-weight:700;transition:all .3s}
+.stage.act{color:var(--tx)}
+.stage.act .ic{border-color:var(--ac);color:var(--ac);box-shadow:0 0 0 0 rgba(74,168,255,.6);animation:pulse 1.6s ease-out infinite}
+.stage.done{color:var(--tx2)}.stage.done .ic{background:var(--ok);border-color:var(--ok);color:#03101f}
+.stage.fail .ic{background:var(--bad);border-color:var(--bad);color:#fff}
+.sline{flex:1;height:2px;min-width:16px;margin:0 8px;background:var(--line);border-radius:2px;overflow:hidden;position:relative}
+.sline.done::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--ok),var(--ac));animation:grow .5s ease-out forwards;transform-origin:left}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(74,168,255,.55)}100%{box-shadow:0 0 0 12px rgba(74,168,255,0)}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media(max-width:600px){.stage span.l{display:none}}
+
+/* --- живая строка --- */
+.live{position:relative;overflow:hidden;display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
+  background:rgba(4,8,18,.5);margin:14px 0 4px;min-height:48px}
+.live::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-40%;background:linear-gradient(90deg,transparent,rgba(94,231,255,.10),transparent);animation:scan 2.2s linear infinite}
+.live.idle::after{display:none}
+.live .orb{flex:none;width:12px;height:12px;border-radius:50%;background:var(--ac2);box-shadow:0 0 12px var(--ac2);animation:breathe 1.2s ease-in-out infinite}
+.live.idle .orb{background:var(--ok);box-shadow:0 0 10px var(--ok);animation:none}
+.live .t{font-size:13.5px;color:var(--tx);transition:opacity .25s}
+.live .t.fade{opacity:0}
+@keyframes scan{to{left:100%}}
+@keyframes breathe{50%{transform:scale(.6);opacity:.6}}
+
+/* --- токены --- */
+.tok{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+@media(max-width:600px){.tok{grid-template-columns:repeat(2,1fr)}}
+.tok .tile .v{font-size:20px;font-variant-numeric:tabular-nums}
+.tok .tile.hl{border-color:var(--line2);background:linear-gradient(135deg,rgba(74,168,255,.12),rgba(94,231,255,.05))}
+.tokhint{font-size:12px;color:var(--tx3);margin-top:6px}
+.bump{animation:bump .35s ease-out}
+@keyframes bump{40%{color:var(--ac2);transform:translateY(-2px)}}
+
+/* --- подлинность --- */
+.vbox{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(4,8,18,.35);animation:rise .4s ease-out}
+.vbox h4{margin:0 0 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx2)}
+.verdict{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:12px;font-weight:600;font-size:14.5px}
+.verdict .big{font-size:22px;line-height:1}
+.verdict.ok{background:rgba(61,220,151,.12);color:var(--ok);border:1px solid rgba(61,220,151,.35)}
+.verdict.warn,.verdict.unknown{background:rgba(255,200,87,.10);color:var(--mid);border:1px solid rgba(255,200,87,.3)}
+.verdict.ref{background:rgba(74,168,255,.12);color:var(--ac);border:1px solid rgba(74,168,255,.4)}
+.verdict.fake{background:rgba(255,107,129,.12);color:var(--bad);border:1px solid rgba(255,107,129,.4)}
+.checks{display:grid;gap:6px;margin-top:10px}
+.chk{display:grid;grid-template-columns:22px 210px 1fr;gap:8px;font-size:13px;align-items:start;opacity:0;animation:rise .35s ease-out forwards}
+@media(max-width:700px){.chk{grid-template-columns:22px 1fr}.chk .x{grid-column:2}}
+.chk .s{font-weight:700;text-align:center}.chk .n{color:var(--tx)}.chk .x{color:var(--tx2)}
+.s.ok{color:var(--ok)}.s.warn{color:var(--mid)}.s.bad{color:var(--bad)}.s.info{color:var(--tx3)}
+.fpt{margin-top:12px}.fpt td,.fpt th{padding:5px 8px;font-size:12.5px}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* --- задачи: состояния --- */
+.task{transition:background .3s,border-color .3s}
+.task.pending{opacity:.5}
+.task.running{opacity:1;border-color:rgba(74,168,255,.35);background:linear-gradient(90deg,rgba(74,168,255,.04),rgba(74,168,255,.12),rgba(74,168,255,.04));background-size:200% 100%;animation:shimmer 1.4s linear infinite}
+.task.done .sc span{display:inline-block;animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes shimmer{to{background-position:-200% 0}}
+@keyframes pop{from{transform:scale(.3);opacity:0}}
+.ring.spin svg #ringFg{stroke-dasharray:60 291.9;animation:ringspin 1.1s linear infinite;transition:none}
+@keyframes ringspin{to{stroke-dashoffset:-351.9}}
+.refs td{font-size:12.5px}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -188,6 +253,12 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
         <label class="f">Метка прогона</label>
         <input class="in" id="tag" placeholder="например: official, reseller-1">
+
+        <label class="f">Заявленная модель</label>
+        <input class="in" id="claimed" placeholder="что обещает сервис, напр. Claude Opus 4.5" spellcheck="false">
+        <div class="hint">С ней сравнивается отпечаток. Пусто — берётся название модели.</div>
+        <label class="ck"><input type="checkbox" id="saveRef"> Это официальный ключ — сохранить как эталон</label>
+        <input class="in hide" id="refName" placeholder="имя эталона, напр. Claude Opus 4.5 (официальный)" style="margin-top:6px">
       </div>
 
       <div class="panel">
@@ -203,7 +274,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           </div>
           <div class="hint">Для «думающих» моделей ставьте max tokens 16000+.</div>
         </details>
+        <label class="ck"><input type="checkbox" id="doVerify" checked> Проверка подлинности (≈10 запросов)</label>
+        <label class="ck"><input type="checkbox" id="doBehavior" checked> Поведенческий отпечаток (+24 коротких запроса)</label>
         <button class="btn main" id="runBtn">Запустить бенчмарк</button>
+        <button class="btn second" id="verifyBtn">Только проверить подлинность</button>
         <button class="btn ghost hide" id="stopBtn" style="width:100%;margin-top:8px">Остановить</button>
       </div>
     </div>
@@ -211,8 +285,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="panel" id="resultPanel">
       <div class="empty" id="emptyState"><b>Здесь появятся результаты</b>Вставьте ключ или выберите подписку и нажмите «Запустить бенчмарк».</div>
       <div id="runView" class="hide">
+        <div class="stages" id="stages"></div>
         <div class="top">
-          <div class="ring">
+          <div class="ring" id="ring">
             <svg width="132" height="132"><circle cx="66" cy="66" r="56" stroke="rgba(255,255,255,.07)" stroke-width="12" fill="none"/>
               <circle id="ringFg" cx="66" cy="66" r="56" stroke="url(#g)" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="351.9" style="transition:stroke-dashoffset .8s"/>
               <defs><linearGradient id="g"><stop offset="0" stop-color="#4aa8ff"/><stop offset="1" stop-color="#5ee7ff"/></linearGradient></defs></svg>
@@ -224,8 +299,17 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
             <div class="bars" id="bars"></div>
           </div>
         </div>
+        <div class="live" id="live"><span class="orb"></span><span class="t" id="liveTxt">Подключаюсь…</span></div>
         <div class="prog"><div id="progFill"></div></div>
         <div class="status"><span id="statusTxt"></span><span id="statusRight"></span></div>
+        <div class="tok">
+          <div class="tile"><div class="k">Запросов</div><div class="v" id="tkReq">0</div></div>
+          <div class="tile"><div class="k">Токенов на вход</div><div class="v" id="tkIn">0</div></div>
+          <div class="tile"><div class="k">Токенов на выход</div><div class="v" id="tkOut">0</div></div>
+          <div class="tile hl"><div class="k">Всего токенов</div><div class="v" id="tkAll">0</div></div>
+        </div>
+        <div class="tokhint" id="tokHint">Считаются все запросы прогона, включая проверки, — сверяйте с расходом в кабинете сервиса.</div>
+        <div id="verifyBox"></div>
         <div class="tiles" id="tiles"></div>
         <div class="tasks" id="tasks"></div>
       </div>
@@ -242,6 +326,12 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       </div>
       <div class="scroll"><table id="histTable"></table></div>
     </div>
+    <div class="panel">
+      <h2>Эталоны для проверки подлинности</h2>
+      <div class="hint" style="margin:0 0 10px">Эталон — прогон официального ключа. С ним сравнивается отпечаток токенизатора и поведение других ключей.
+        <span id="tiktokenHint"></span></div>
+      <div class="scroll"><table class="refs" id="refsTable"></table></div>
+    </div>
     <div class="panel hide" id="cmpPanel">
       <h2>Сравнение</h2>
       <div class="scroll"><table id="cmpTable"></table></div>
@@ -250,7 +340,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 </div>
 
 <script>
-const CAT = {code:"Кодинг", montage:"Монтаж", agent:"Агент (голос)", funnel:"Воронка", instruct:"Инструкции", context:"Длинный контекст"};
+const CAT = {code:"Кодинг", hard:"Сложные", montage:"Монтаж", agent:"Агент (голос)", funnel:"Воронка", instruct:"Инструкции", context:"Длинный контекст"};
+const STAGES = {connect:"Подключение", verify:"Подлинность", tasks:"Задачи", done:"Итог"};
+const PROBE_NAMES = {en:"Английский", ru:"Русский", code:"Код", num:"Числа", mix:"Эмодзи/иероглифы"};
+const VERDICT = {ok:["✓","Похоже на заявленную модель"], warn:["!","Есть вопросы"], unknown:["?","Нельзя подтвердить"], fake:["✗","Похоже на подмену"], ref:["★","Эталон сохранён"]};
 const PROVIDERS = {
   anthropic:{name:"Anthropic", provider:"anthropic", base:"https://api.anthropic.com", models:["claude-opus-5-5","claude-sonnet-5-5","claude-haiku-5-5"]},
   openai:{name:"OpenAI", provider:"openai", base:"https://api.openai.com/v1", models:[]},
@@ -356,7 +449,9 @@ function fillModels(list){
 function cfg(){
   const c = {model: $("#model").value.trim(), tag: $("#tag").value.trim(), only: cats,
     repeat: +$("#repeat").value || 1, workers: +$("#workers").value || 4,
-    max_tokens: +$("#maxTokens").value || 4096, ctx_chars: cats.includes("context") ? (+$("#ctxChars").value || 0) : 0};
+    max_tokens: +$("#maxTokens").value || 4096, ctx_chars: cats.includes("context") ? (+$("#ctxChars").value || 0) : 0,
+    claimed: $("#claimed").value.trim(), verify: $("#doVerify").checked, behavior: $("#doBehavior").checked,
+    save_ref: $("#saveRef").checked ? ($("#refName").value.trim() || ($("#claimed").value.trim() || $("#model").value.trim()) + " (официальный)") : ""};
   if (mode === "api") Object.assign(c, {provider: PROVIDERS[prov].provider, base_url: $("#baseUrl").value.trim(), key: $("#apiKey").value.trim()});
   else c.provider = sub;
   return c;
@@ -431,7 +526,6 @@ function autoCheck(){
     const k = $("#apiKey").value.trim(), sig = prov + "|" + $("#baseUrl").value.trim() + "|" + k;
     if (mode !== "api" || k.length < 16 || sig === lastAuto || (prov === "custom" && !$("#baseUrl").value.trim())) return;
     lastAuto = sig; allModels = []; modelStatus = {}; renderModels();
-    if (!PROVIDERS[prov].models.includes($("#model").value)) $("#model").value = "";
     doCheck(true);
   }, 700);
 }
@@ -442,26 +536,74 @@ function paintCats(){ $$(".cat").forEach(b => b.classList.toggle("on", cats.incl
 $$(".cat").forEach(b => b.onclick = () => { const k = b.dataset.c; cats = cats.includes(k) ? cats.filter(x => x !== k) : [...cats, k]; paintCats(); });
 
 /* ---------- run ---------- */
-$("#runBtn").onclick = async () => {
+async function start(onlyVerify){
   const c = cfg();
   if (mode === "api" && prov === "custom" && !c.base_url) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Укажите адрес API сервиса, который выдал ключ"; return; }
   if (mode === "api" && (!c.key || !c.model)) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Нужны ключ и модель"; return; }
-  if (!cats.length) return;
+  if (onlyVerify) { c.only = ["__none__"]; c.ctx_chars = 0; c.verify = true; }
+  else if (!cats.length && !c.verify) return;
+  else if (!cats.length) { c.only = ["__none__"]; c.ctx_chars = 0; }
   resetView(c);
-  $("#runBtn").disabled = true; $("#stopBtn").classList.remove("hide");
+  $("#runBtn").disabled = $("#verifyBtn").disabled = true; $("#stopBtn").classList.remove("hide");
   const r = await api("/api/run", c);
   runId = r.id; since = 0; poll();
-};
+}
+$("#runBtn").onclick = () => start(false);
+$("#verifyBtn").onclick = () => start(true);
+$("#saveRef").onchange = e => $("#refName").classList.toggle("hide", !e.target.checked);
 $("#stopBtn").onclick = () => runId && api("/api/cancel", {id: runId});
 
 function resetView(c){
   $("#emptyState").classList.add("hide"); $("#runView").classList.remove("hide");
   $("#runLabel").textContent = (c.model || "default") + (c.tag ? ` [${c.tag}]` : "");
   $("#runBase").textContent = mode === "api" ? c.base_url : (sub === "claude-cli" ? "Claude — подписка" : "ChatGPT — подписка");
-  $("#tiles").innerHTML = ""; $("#tasks").innerHTML = ""; $("#bars").innerHTML = "";
-  $("#totalV").textContent = "—"; setRing(0); $("#progFill").style.width = "0";
-  $("#statusTxt").textContent = "Проверяю ключ и скорость…"; $("#statusRight").textContent = "";
-  taskTotal = taskDone = 0; catScores = {};
+  $("#tiles").innerHTML = ""; $("#tasks").innerHTML = ""; $("#bars").innerHTML = ""; $("#verifyBox").innerHTML = "";
+  $("#totalV").textContent = "—"; setRing(0); $("#progFill").style.width = "0"; $("#ring").classList.add("spin");
+  $("#statusTxt").textContent = ""; $("#statusRight").textContent = "";
+  ["#tkReq","#tkIn","#tkOut","#tkAll"].forEach(id => { $(id).textContent = "0"; $(id).dataset.v = 0; });
+  $("#tokHint").textContent = "Считаются все запросы прогона, включая проверки, — сверяйте с расходом в кабинете сервиса.";
+  $("#stages").innerHTML = ""; setLive("Подключаюсь…");
+  taskTotal = taskDone = 0; catScores = {}; overhead = null;
+}
+let overhead = null;
+const fmt = n => Number(n || 0).toLocaleString("ru-RU");
+function countTo(el, to){
+  const from = +el.dataset.v || 0; el.dataset.v = to;
+  if (from === to) return;
+  el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump");
+  const t0 = performance.now(), d = 500;
+  const step = t => { const k = Math.min(1, (t - t0) / d), v = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3)));
+    el.textContent = fmt(v); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function setLive(text, idle){
+  const t = $("#liveTxt"); $("#live").classList.toggle("idle", !!idle);
+  if (t.textContent === text) return;
+  t.classList.add("fade"); setTimeout(() => { t.textContent = text; t.classList.remove("fade"); }, 180);
+}
+function renderStages(plan, current, failed){
+  const idx = plan.indexOf(current);
+  $("#stages").innerHTML = plan.map((s, i) => {
+    const st = failed && i === idx ? "fail" : i < idx || current === "done" ? "done" : i === idx ? "act" : "";
+    const ic = st === "done" ? "✓" : st === "fail" ? "✗" : i + 1;
+    return (i ? `<div class="sline ${i <= idx ? "done" : ""}"></div>` : "") + `<div class="stage ${st}"><span class="ic">${ic}</span><span class="l">${STAGES[s]}</span></div>`;
+  }).join("");
+}
+let plan = [], curStage = null;
+function renderVerify(v){
+  const vd = v.verdict, [ic, title] = VERDICT[vd.level] || ["?", ""];
+  const fp = v.fingerprint || {}, best = (vd.matches || [])[0];
+  let html = `<div class="vbox"><h4>Проверка подлинности</h4><div class="verdict ${vd.level}"><span class="big">${ic}</span><div>${title}<div style="font-weight:400;font-size:13px;margin-top:2px">${esc(vd.text)}</div></div></div>`;
+  html += `<div class="checks">` + vd.checks.map((c, i) => `<div class="chk" style="animation-delay:${i * 90}ms"><span class="s ${c.level}">${{ok:"✓",warn:"!",bad:"✗",info:"·"}[c.level]}</span><span class="n">${esc(c.name)}</span><span class="x">${esc(c.text)}</span></div>`).join("") + `</div>`;
+  if (fp.deltas) {
+    const refs = (vd.matches || []).slice(0, 3);
+    html += `<table class="fpt"><tr><th>Отпечаток токенизатора</th><th class="num">Этот ключ</th>${refs.map(r => `<th class="num" title="${esc(r.name)}">${esc(r.name.slice(0, 26))}<div class="hint" style="margin:0">${Math.round(r.similarity * 100)}%${r.match ? " · совпадает" : ""}</div></th>`).join("")}</tr>` +
+      Object.keys(PROBE_NAMES).map(k => `<tr><td>${PROBE_NAMES[k]}</td><td class="num"><b>${fp.deltas[k] ?? "—"}</b></td>${refs.map(r => {
+        const d = (fp.deltas[k] ?? 0) - (r.deltas[k] ?? 0); return `<td class="num" style="color:${Math.abs(d) <= Math.max(2, .03 * (r.deltas[k] || 0)) ? "var(--ok)" : "var(--bad)"}">${r.deltas[k] ?? "—"}</td>`; }).join("")}</tr>`).join("") + `</table>`;
+    if (!refs.length) html += `<div class="hint">Эталонов пока нет. Прогоните официальный ключ с галочкой «Сохранить как эталон».</div>`;
+  }
+  $("#verifyBox").innerHTML = html + `</div>`;
+  if (fp.overhead != null && fp.overhead > 150) overhead = fp.overhead;
 }
 function setRing(v){ $("#ringFg").style.strokeDashoffset = 351.9 * (1 - v / 100); }
 
@@ -470,18 +612,34 @@ async function poll(){
   try { r = await api(`/api/run?id=${runId}&since=${since}`); } catch { setTimeout(poll, 1500); return; }
   since = r.next;
   r.events.forEach(handle);
-  if (r.status === "running") setTimeout(poll, 700);
-  else { $("#runBtn").disabled = false; $("#stopBtn").classList.add("hide"); }
+  if (r.status === "running") setTimeout(poll, 600);
+  else { $("#runBtn").disabled = $("#verifyBtn").disabled = false; $("#stopBtn").classList.add("hide"); $("#ring").classList.remove("spin"); }
 }
 
-const HEALTH = [["ping_sec","Задержка, с"],["tok_per_sec","Токенов/с"],["fingerprint_in_tokens","Отпечаток"],["served_model","Отвечает модель"],
+const HEALTH = [["ping_sec","Задержка, с"],["tok_per_sec","Токенов/с"],["served_model","Отвечает модель"],
   ["model_listed","Модель в списке"],["deterministic_t0","Повторяемость"],["self_identity","Называет себя"]];
 function handle(ev){
+  if (ev.type === "stage") {
+    if (ev.plan) plan = ev.plan;
+    curStage = ev.stage; renderStages(plan, ev.stage);
+    if (ev.stage === "verify") setLive("Проверяю, та ли это модель, что заявлена");
+  }
+  if (ev.type === "activity") setLive(ev.text);
+  if (ev.type === "usage") {
+    countTo($("#tkReq"), ev.requests); countTo($("#tkIn"), ev.in); countTo($("#tkOut"), ev.out); countTo($("#tkAll"), ev.in + ev.out);
+    if (overhead) $("#tokHint").textContent = `Из входных токенов ≈${fmt(overhead * ev.requests)} (${Math.round(100 * overhead * ev.requests / Math.max(ev.in, 1))}%) — скрытая инструкция сервиса: ≈${fmt(overhead)} на каждый запрос.`;
+  }
+  if (ev.type === "verify") renderVerify(ev.data);
+  if (ev.type === "task_start") {
+    const el = $("#t-" + ev.id);
+    if (el) { el.classList.remove("pending"); el.classList.add("running"); el.children[0].outerHTML = `<div class="spin"></div>`; el.querySelector(".nt").textContent = "модель решает…"; }
+    setLive("Сейчас: " + (ev.desc || ev.id));
+  }
   if (ev.type === "health") {
     const h = ev.data;
     $("#tiles").innerHTML = HEALTH.filter(([k]) => h[k] !== undefined && h[k] !== null)
       .map(([k,n]) => `<div class="tile" ${k==="self_identity"?'style="grid-column:1/-1"':""}><div class="k">${n}</div><div class="v">${esc(typeof h[k]==="boolean" ? (h[k]?"да":"нет") : h[k])}</div></div>`).join("");
-    $("#statusTxt").textContent = "Ключ работает, запускаю задачи…";
+    $("#statusTxt").textContent = "Ключ работает";
   }
   if (ev.type === "start") {
     taskTotal = ev.tasks.length;
@@ -489,15 +647,16 @@ function handle(ev){
     const groups = {};
     ev.tasks.forEach(t => (groups[t.cat] ||= []).push(t));
     $("#tasks").innerHTML = Object.entries(groups).map(([c, ts]) => `<div class="grp"><h3>${CAT[c] || c}</h3>` +
-      ts.map(t => `<div class="task" id="t-${t.id}"><div class="spin"></div><div><div class="nm">${t.id}</div><div class="nt">выполняется…</div></div><div class="sc"></div></div>`).join("") + "</div>").join("");
+      ts.map(t => `<div class="task pending" id="t-${t.id}"><div class="dot"></div><div><div class="nm">${t.id}</div><div class="nt">${esc(t.desc || "в очереди")}</div></div><div class="sc"></div></div>`).join("") + "</div>").join("");
     $("#bars").innerHTML = Object.keys(groups).map(c => `<div class="bar" id="b-${c}"><span>${CAT[c] || c}</span><div class="tr"><div class="fl"></div></div><span class="n">—</span></div>`).join("");
     $("#statusTxt").textContent = `0 / ${taskTotal}`;
   }
   if (ev.type === "task") {
     const r = ev.data, v = Math.round(r.score * 100), el = $("#t-" + r.id);
     if (el) {
+      el.classList.remove("pending", "running"); el.classList.add("done");
       el.children[0].outerHTML = `<div class="dot" style="background:${color(v)}"></div>`;
-      el.querySelector(".nt").textContent = r.notes[r.notes.length - 1];
+      el.querySelector(".nt").textContent = r.notes[r.notes.length - 1] + (r.in != null ? ` · ${fmt(r.in)} → ${fmt(r.out)} ток.` : "");
       el.querySelector(".nt").title = r.notes.join("\n");
       el.querySelector(".sc").innerHTML = `<span style="color:${color(v)}">${v}</span>`;
     }
@@ -509,16 +668,25 @@ function handle(ev){
     $("#statusTxt").textContent = `${taskDone} / ${taskTotal}`;
     const vals = Object.values(catScores).map(a => 100 * a.reduce((x,y) => x+y, 0) / a.length);
     const tot = Math.round(vals.reduce((a,b) => a+b, 0) / vals.length);
-    $("#totalV").textContent = tot; setRing(tot);
+    $("#ring").classList.remove("spin"); $("#totalV").textContent = tot; setRing(tot);
   }
   if (ev.type === "done") {
-    $("#totalV").textContent = Math.round(ev.summary.TOTAL); setRing(ev.summary.TOTAL);
-    $("#statusTxt").textContent = `Готово за ${ev.seconds} с · токены: ${ev.tokens.in} вход / ${ev.tokens.out} выход`;
+    $("#ring").classList.remove("spin");
+    if (ev.summary.TOTAL != null) { $("#totalV").textContent = Math.round(ev.summary.TOTAL); setRing(ev.summary.TOTAL); }
+    else { $("#totalV").textContent = "—"; setRing(0); }
+    const tk = ev.tokens;
+    $("#statusTxt").textContent = `Готово за ${ev.seconds} с · ${fmt(tk.requests)} запросов · ${fmt(tk.in)} вход / ${fmt(tk.out)} выход`;
     $("#statusRight").textContent = "Сохранено в историю";
+    $("#progFill").style.width = "100%";
+    setLive("Готово", true);
   }
   if (ev.type === "error") {
+    $("#ring").classList.remove("spin");
     $("#statusTxt").innerHTML = `<span class="warn">${esc(ev.message)}</span>`;
     $$(".task .spin").forEach(s => s.outerHTML = `<div class="dot"></div>`);
+    $$(".task.running").forEach(s => s.classList.remove("running"));
+    if (plan.length) renderStages(plan, curStage || plan[0], true);
+    setLive("Остановлено", true);
   }
 }
 
@@ -528,25 +696,43 @@ async function loadHistory(){
   hist = await api("/api/results");
   const t = $("#histTable");
   if (!hist.length) { t.innerHTML = `<tr><td class="empty">Пока нет прогонов</td></tr>`; return; }
-  t.innerHTML = `<tr><th></th><th>Прогон</th><th>Дата</th><th class="num">Итог</th><th class="num">Отпечаток</th><th class="num">Ток/с</th><th></th></tr>` +
+  const VL = {ref:["var(--ac)","эталон"], ok:["var(--ok)","подтверждено"], warn:["var(--mid)","вопросы"], unknown:["var(--tx3)","нет эталона"], fake:["var(--bad)","подмена?"]};
+  t.innerHTML = `<tr><th></th><th>Прогон</th><th>Дата</th><th class="num">Итог</th><th>Подлинность</th><th class="num">Токены вход / выход</th><th class="num">Ток/с</th><th></th></tr>` +
     hist.map((h, i) => `<tr><td><input type="checkbox" data-i="${i}" ${i < 2 ? "checked" : ""}></td><td>${esc(h.label)}<div class="hint" style="margin:0">${esc(h.provider)}</div></td>
-      <td>${esc(h.date)}</td><td class="num"><span class="pill" style="background:${color(h.summary?.TOTAL)}22;color:${color(h.summary?.TOTAL)}">${Math.round(h.summary?.TOTAL ?? 0)}</span></td>
-      <td class="num">${esc(h.health?.fingerprint_in_tokens ?? "—")}</td><td class="num">${esc(h.health?.tok_per_sec ?? "—")}</td>
-      <td class="num"><button class="btn sm ghost" data-del="${esc(h.file)}">Удалить</button></td></tr>`).join("");
+      <td>${esc(h.date)}</td><td class="num">${h.summary?.TOTAL == null ? "—" : `<span class="pill" style="background:${color(h.summary.TOTAL)}22;color:${color(h.summary.TOTAL)}">${Math.round(h.summary.TOTAL)}</span>`}</td>
+      <td>${h.verdict ? `<span style="color:${VL[h.verdict][0]}">● ${VL[h.verdict][1]}</span>` : "—"}<div class="hint" style="margin:0">${esc(h.claimed || "")}</div></td>
+      <td class="num">${h.tokens ? `${fmt(h.tokens.in)} / ${fmt(h.tokens.out)}` : "—"}</td><td class="num">${esc(h.health?.tok_per_sec ?? "—")}</td>
+      <td class="num" style="white-space:nowrap">${h.has_fp ? `<button class="btn sm ghost" data-ref="${esc(h.file)}" data-name="${esc((h.claimed || h.label) + " (официальный)")}">Сделать эталоном</button> ` : ""}<button class="btn sm ghost" data-del="${esc(h.file)}">Удалить</button></td></tr>`).join("");
+  $$("[data-ref]").forEach(b => b.onclick = async () => {
+    const name = prompt("Имя эталона (по нему будет видно семейство модели):", b.dataset.name);
+    if (!name) return;
+    const r = await api("/api/refs/add", {file: b.dataset.ref, name});
+    if (!r.ok) alert(r.error); loadRefs();
+  });
+  loadRefs();
   $$("[data-del]").forEach(b => b.onclick = async () => { if (confirm("Удалить прогон?")) { await api("/api/delete", {file: b.dataset.del}); loadHistory(); } });
 }
 $("#refreshBtn").onclick = loadHistory;
+async function loadRefs(){
+  const refs = await api("/api/refs"), t = $("#refsTable");
+  if (!refs.length) { t.innerHTML = `<tr><td class="hint">Эталонов пока нет</td></tr>`; return; }
+  t.innerHTML = `<tr><th>Эталон</th><th>Дата</th>${Object.values(PROBE_NAMES).map(n => `<th class="num">${n}</th>`).join("")}<th></th></tr>` +
+    refs.map(r => `<tr><td>${esc(r.name)}${r.builtin ? ' <span class="hint">встроенный</span>' : ""}</td><td>${esc(r.date || "—")}</td>
+      ${Object.keys(PROBE_NAMES).map(k => `<td class="num">${r.deltas?.[k] ?? "—"}</td>`).join("")}
+      <td class="num">${r.builtin ? "" : `<button class="btn sm ghost" data-delref="${esc(r.name)}">Удалить</button>`}</td></tr>`).join("");
+  $$("[data-delref]").forEach(b => b.onclick = async () => { if (confirm("Удалить эталон?")) { await api("/api/refs/delete", {name: b.dataset.delref}); loadRefs(); } });
+}
 $("#cmpBtn").onclick = () => {
   const sel = $$("#histTable input:checked").map(c => hist[+c.dataset.i]);
   if (!sel.length) return;
   const cats = [...new Set(sel.flatMap(h => Object.keys(h.summary || {})))].filter(c => c !== "TOTAL");
   const ids = [...new Set(sel.flatMap(h => Object.keys(h.tasks || {})))].sort();
   const cell = v => v == null ? `<td class="num">—</td>` : `<td class="num"><span class="pill" style="background:${color(v)}22;color:${color(v)}">${Math.round(v)}</span></td>`;
-  const fps = sel.map(h => h.health?.fingerprint_in_tokens), fpDiff = new Set(fps.filter(x => x != null)).size > 1;
+  const fps = sel.map(h => h.health?.fingerprint_in_tokens), fpDiff = false;
   let html = `<tr><th></th>${sel.map(h => `<th class="num">${esc(h.label)}<div class="hint" style="margin:0">${esc(h.date)}</div></th>`).join("")}</tr>`;
   html += `<tr><td><b>ИТОГ</b></td>${sel.map(h => cell(h.summary?.TOTAL)).join("")}</tr>`;
   html += cats.map(c => `<tr><td>${CAT[c] || c}</td>${sel.map(h => cell(h.summary?.[c])).join("")}</tr>`).join("");
-  html += `<tr><td>Отпечаток токенов ${fpDiff ? '<span class="warn">≠ разные модели?</span>' : ""}</td>${fps.map(f => `<td class="num ${fpDiff ? "warn" : ""}">${esc(f ?? "—")}</td>`).join("")}</tr>`;
+  html += `<tr><td>Токены вход / выход</td>${sel.map(h => `<td class="num">${h.tokens ? fmt(h.tokens.in) + " / " + fmt(h.tokens.out) : "—"}</td>`).join("")}</tr>`;
   html += `<tr><td>Задержка, с</td>${sel.map(h => `<td class="num">${esc(h.health?.ping_sec ?? "—")}</td>`).join("")}</tr>`;
   html += `<tr><td>Токенов/с</td>${sel.map(h => `<td class="num">${esc(h.health?.tok_per_sec ?? "—")}</td>`).join("")}</tr>`;
   html += `<tr><td>Отвечает модель</td>${sel.map(h => `<td class="num">${esc(h.health?.served_model ?? "—")}</td>`).join("")}</tr>`;
@@ -566,6 +752,7 @@ $("#cmpBtn").onclick = () => {
     $("#envChips").innerHTML = chip(env.claude_cli, "Claude CLI") + chip(env.codex_cli, "Codex CLI") + chip(env.ffmpeg, "ffmpeg");
     $("#stClaude").className = "st " + (env.claude_cli ? "ok" : "no"); $("#stClaude").textContent = env.claude_cli ? "найден" : "не установлен";
     $("#stCodex").className = "st " + (env.codex_cli ? "ok" : "no"); $("#stCodex").textContent = env.codex_cli ? "найден" : "не установлен";
+    $("#tiktokenHint").textContent = env.tiktoken ? "Эталоны GPT встроены (tiktoken)." : "Чтобы получить встроенные эталоны GPT, выполните: pip install tiktoken";
   } catch {}
 })();
 </script>
