@@ -42,6 +42,15 @@ label.f{display:block;font-size:12px;color:var(--tx2);margin:12px 0 6px}
 .row{display:flex;gap:8px;align-items:center}
 .row .in{flex:1}
 .prov{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.lbox{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(4,8,18,.45)}
+.lsrv{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;animation:rise .3s ease-out}
+.lsrv .h{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px}
+.lsrv .h .dot{width:8px;height:8px;margin:0;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.lsrv .u{font-family:var(--mono);font-size:11.5px;color:var(--tx3);margin-left:auto}
+.lsrv .mchips{margin-top:8px}
+.lnone{font-size:12.5px;color:var(--tx2);margin-top:8px}
+.lnone b{color:var(--tx)}
+.lnone ul{margin:6px 0 0;padding-left:18px;color:var(--tx3)}
 .prov button{padding:8px 6px;border-radius:10px;border:1px solid var(--line);background:rgba(4,8,18,.4);cursor:pointer;font-size:13px;color:var(--tx2)}
 .prov button.act{border-color:var(--ac);color:var(--tx);background:rgba(74,168,255,.12)}
 .sub{display:grid;gap:8px}
@@ -277,7 +286,16 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
             <input class="in" id="baseUrl" spellcheck="false" placeholder="https://api.сервис.com/v1">
             <div class="hint hide" id="baseHint">Адрес API из документации или кабинета сервиса, который выдал ключ. Протокол (OpenAI или Anthropic) и способ авторизации подберутся автоматически.</div>
           </div>
-          <label class="f">Ключ</label>
+          <div class="lbox hide" id="localBox">
+            <div class="row">
+              <input class="in" id="localHost" value="127.0.0.1" spellcheck="false" title="Этот компьютер — 127.0.0.1. Другой компьютер в сети — его адрес, напр. 192.168.1.20">
+              <button class="btn" id="localScan">Найти модели</button>
+            </div>
+            <div class="hint">Ищу Ollama, LM Studio, llama.cpp, vLLM, Jan, text-generation-webui, KoboldCpp, GPT4All и др. на стандартных портах.
+              Свой порт — укажите в Base URL выше.</div>
+            <div id="localFound"></div>
+          </div>
+          <label class="f" id="keyLabel">Ключ</label>
           <div class="row">
             <input class="in" id="apiKey" type="password" placeholder="sk-..." spellcheck="false" autocomplete="off">
             <button class="eye" id="eye" title="Показать">👁</button>
@@ -475,6 +493,7 @@ const PROVIDERS = {
   deepseek:{name:"DeepSeek", provider:"openai", base:"https://api.deepseek.com/v1", models:["deepseek-chat","deepseek-reasoner"]},
   gemini:{name:"Gemini", provider:"openai", base:"https://generativelanguage.googleapis.com/v1beta/openai", models:[]},
   custom:{name:"Другой сервис", provider:"auto", base:"", models:[]},
+  local:{name:"Локальная", provider:"auto", base:"http://127.0.0.1:11434/v1", models:[]},
 };
 const SUB_MODELS = {"claude-cli":["default","opus","sonnet","haiku"], "codex-cli":["default"]};
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
@@ -523,6 +542,10 @@ function setProv(k){
   $("#remember").checked = !!store.get("key."+k, "");
   $("#model").value = store.get("model."+k, PROVIDERS[k].models[0] || "");
   $("#baseHint").classList.toggle("hide", k !== "custom");
+  $("#localBox").classList.toggle("hide", k !== "local");
+  $("#keyLabel").textContent = k === "local" ? "Ключ (для локальных обычно не нужен)" : "Ключ";
+  $("#apiKey").placeholder = k === "local" ? "можно оставить пустым" : "sk-...";
+  if (k === "local") { $("#workers").value = 1; if (!$("#localFound").innerHTML) setTimeout(() => localScan(true), 50); }
   allModels = []; modelStatus = {}; if (typeof renderModels === "function") renderModels();
   fillModels();
 }
@@ -539,6 +562,7 @@ const KEY_RULES = [
 ];
 function applyKeyRule(key){
   const h = $("#keyHint");
+  if (prov === "local") { h.textContent = ""; return; }
   if (key.length < 8) { h.textContent = ""; return; }
   const hit = KEY_RULES.find(([re]) => re.test(key));
   const r = hit ? hit[1] : {prov: "custom", msg: "Ключ не от Anthropic / OpenAI / OpenRouter / Gemini. Укажите адрес API сервиса, который его выдал, — протокол подберётся автоматически."};
@@ -581,9 +605,41 @@ function cfg(){
     claimed: $("#claimed").value.trim(), verify: $("#doVerify").checked, behavior: $("#doBehavior").checked,
     save_ref: $("#saveRef").checked ? ($("#refName").value.trim() || ($("#claimed").value.trim() || $("#model").value.trim()) + " (официальный)") : ""};
   if (mode === "api") Object.assign(c, {provider: PROVIDERS[prov].provider, base_url: $("#baseUrl").value.trim(), key: $("#apiKey").value.trim()});
+  if (mode === "api" && prov === "local") Object.assign(c, {timeout: 900, key: c.key || "local"});
   else c.provider = sub;
   return c;
 }
+
+/* ---------- local models ---------- */
+async function localScan(quiet){
+  const box = $("#localFound"), host = $("#localHost").value.trim() || "127.0.0.1";
+  box.innerHTML = `<div class="lnone">Ищу модели на ${esc(host)}…</div>`;
+  $("#localScan").disabled = true;
+  let r;
+  try { r = await fetch(`/api/local/scan?host=${encodeURIComponent(host)}`).then(x => x.json()); }
+  catch { box.innerHTML = `<div class="lnone">Сервер недоступен</div>`; $("#localScan").disabled = false; return; }
+  $("#localScan").disabled = false;
+  if (r.error) { box.innerHTML = `<div class="lnone" style="color:var(--bad)">${esc(r.error)}</div>`; return; }
+  if (!r.found.length) {
+    box.innerHTML = `<div class="lnone"><b>Ничего не запущено.</b> Запустите программу с моделью и нажмите «Найти модели» ещё раз:
+      <ul><li>Ollama: <code>ollama run qwen3</code></li><li>LM Studio: вкладка Developer → Start Server</li>
+      <li>llama.cpp: <code>llama-server -m модель.gguf</code></li></ul></div>`;
+    return;
+  }
+  box.innerHTML = r.found.map((f, i) => `<div class="lsrv"><div class="h"><span class="dot"></span>${esc(f.name)}<span class="u">${esc(f.base_url)}</span></div>
+    <div class="mchips">${f.models.length ? f.models.map(m => `<button class="mchip" data-srv="${i}" data-m="${esc(m)}">${esc(m)}</button>`).join("")
+      : `<span class="hint" style="margin:0">сервер запущен, но модель не загружена</span>`}</div></div>`).join("");
+  $$("#localFound .mchip").forEach(b => b.onclick = () => {
+    const f = r.found[+b.dataset.srv];
+    $("#baseUrl").value = f.base_url; store.set("base.local", f.base_url);
+    $("#model").value = b.dataset.m; store.set("model.local", b.dataset.m);
+    if (!$("#claimed").value) $("#claimed").value = b.dataset.m;
+    $$("#localFound .mchip").forEach(x => x.classList.toggle("sel", x === b));
+    doCheck(true);
+  });
+  if (!quiet && r.found.length === 1 && r.found[0].models.length === 1) $("#localFound .mchip").click();
+}
+$("#localScan").onclick = () => localScan(false);
 
 /* ---------- models list ---------- */
 const NON_CHAT = /embed|whisper|tts|dall-e|image|moderation|audio|realtime|transcri|rerank|search-preview|computer-use|sora|veo|imagen|lyria|aqa/i;
@@ -620,7 +676,7 @@ $("#mOther").onclick = () => { showOther = !showOther; renderModels(); };
 let checking = false, lastAuto = "";
 async function doCheck(quiet){
   const c = cfg(), m = $("#checkMsg");
-  if (mode === "api" && !c.key) { if (!quiet) { m.className = "msg bad"; m.textContent = "Вставьте ключ"; } return; }
+  if (mode === "api" && !c.key && prov !== "local") { if (!quiet) { m.className = "msg bad"; m.textContent = "Вставьте ключ"; } return; }
   if (mode === "api" && prov === "custom" && !c.base_url) { if (!quiet) { m.className = "msg bad"; m.textContent = "Укажите адрес API сервиса, который выдал ключ"; } return; }
   if (checking) return;
   checking = true; $("#checkBtn").disabled = true;
@@ -652,7 +708,7 @@ function autoCheck(){
   clearTimeout(autoTimer);
   autoTimer = setTimeout(() => {
     const k = $("#apiKey").value.trim(), sig = prov + "|" + $("#baseUrl").value.trim() + "|" + k;
-    if (mode !== "api" || k.length < 16 || sig === lastAuto || (prov === "custom" && !$("#baseUrl").value.trim())) return;
+    if (mode !== "api" || prov === "local" || k.length < 16 || sig === lastAuto || (prov === "custom" && !$("#baseUrl").value.trim())) return;
     lastAuto = sig; allModels = []; modelStatus = {}; renderModels();
     doCheck(true);
   }, 700);
@@ -667,7 +723,8 @@ $$(".cat").forEach(b => b.onclick = () => { const k = b.dataset.c; cats = cats.i
 async function start(onlyVerify){
   const c = cfg();
   if (mode === "api" && prov === "custom" && !c.base_url) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Укажите адрес API сервиса, который выдал ключ"; return; }
-  if (mode === "api" && (!c.key || !c.model)) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Нужны ключ и модель"; return; }
+  if (mode === "api" && prov === "local" && !c.model) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Выберите модель из найденных"; return; }
+  if (mode === "api" && ((!c.key && prov !== "local") || !c.model)) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Нужны ключ и модель"; return; }
   if (onlyVerify) { c.only = ["__none__"]; c.ctx_chars = 0; c.verify = true; }
   else if (!cats.length && !c.verify) return;
   else if (!cats.length) { c.only = ["__none__"]; c.ctx_chars = 0; }
