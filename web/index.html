@@ -42,6 +42,15 @@ label.f{display:block;font-size:12px;color:var(--tx2);margin:12px 0 6px}
 .row{display:flex;gap:8px;align-items:center}
 .row .in{flex:1}
 .prov{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pub{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.pub h3{margin:0 0 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx2);font-weight:600}
+.pbrow{display:grid;grid-template-columns:22px 1fr 64px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.pbrow:last-of-type{border-bottom:0}
+.pbrow .nm{font-size:13px;font-weight:600}.pbrow .ab{font-size:11.5px;color:var(--tx3)}
+.pbrow .in{padding:5px 8px;font-size:12.5px;text-align:right}
+.lock{font-size:10.5px;padding:1px 6px;border-radius:6px;background:rgba(255,200,87,.12);color:var(--mid);margin-left:4px;font-weight:500}
+.cachedb{font-size:10.5px;padding:1px 6px;border-radius:6px;background:rgba(61,220,151,.12);color:var(--ok);margin-left:4px;font-weight:500}
+.est{margin-top:8px;font-size:12.5px;color:var(--tx2)}.est b{color:var(--tx)}
 .lbox{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(4,8,18,.45)}
 .lsrv{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;animation:rise .3s ease-out}
 .lsrv .h{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13.5px}
@@ -208,6 +217,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .ccard .how{font-size:13px;color:var(--tx2)}
 .ccard .nt{font-size:12px;color:var(--tx3)}
 .lvl{font-size:11px;padding:1px 8px;border-radius:99px;border:1px solid var(--line2);color:var(--tx2)}
+.lvl.публичный{border-color:rgba(94,231,255,.5);color:var(--ac2)}
 .lvl.сложный{border-color:rgba(255,107,129,.5);color:var(--bad)}.lvl.прикладной{border-color:rgba(61,220,151,.45);color:var(--ok)}
 .chips2{display:flex;flex-wrap:wrap;gap:5px}
 .chip2{font-size:11.5px;padding:2px 8px;border-radius:7px;background:rgba(74,168,255,.12);color:var(--ac)}
@@ -356,6 +366,21 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           </div>
           <div class="hint">Для «думающих» моделей ставьте max tokens 16000+. Если сервис отвечает «не хватает баланса» при живом остатке — уменьшите max tokens до 1000–2000 и «Параллельно» до 1.</div>
         </details>
+        <div class="pub">
+          <h3>Публичные бенчмарки (мини-версии)</h3>
+          <div id="pubList"></div>
+          <div id="hfWrap" class="hide">
+            <label class="f">Токен Hugging Face — для GPQA и HLE</label>
+            <input class="in" id="hfToken" type="password" placeholder="hf_…" spellcheck="false" autocomplete="off">
+            <div class="hint">Бесплатно: зарегистрируйтесь на huggingface.co, примите условия наборов
+              <a href="https://huggingface.co/datasets/Idavidrein/gpqa" target="_blank" rel="noopener" style="color:var(--ac)">GPQA</a> и
+              <a href="https://huggingface.co/datasets/cais/hle" target="_blank" rel="noopener" style="color:var(--ac)">HLE</a>,
+              создайте токен (Settings → Access Tokens, тип Read).</div>
+            <label class="ck"><input type="checkbox" id="hfRemember"> Запомнить токен в этом браузере</label>
+          </div>
+          <div class="est" id="pubEst"></div>
+          <div class="hint">Вопросы одинаковые для всех ключей — результаты можно сравнивать. Баллы не равны официальным: модель отвечает без инструментов.</div>
+        </div>
         <label class="ck"><input type="checkbox" id="doVerify" checked> Проверка подлинности (≈10 запросов)</label>
         <label class="ck"><input type="checkbox" id="doBehavior" checked> Поведенческий отпечаток (+24 коротких запроса)</label>
         <button class="btn main" id="runBtn">Запустить бенчмарк</button>
@@ -482,6 +507,7 @@ https://api.сервис.ru/v1 | kl_live_… | Магазин Б | 99 | 500к"><
 </div>
 
 <script>
+const PUB_NAMES = {mmlu_pro:"MMLU-Pro", gpqa:"GPQA Diamond", hle:"Humanity's Last Exam", arc_agi_2:"ARC-AGI-2", livecodebench:"LiveCodeBench"};
 const CAT = {code:"Кодинг", hard:"Сложные", montage:"Монтаж", agent:"Агент (голос)", funnel:"Воронка", instruct:"Инструкции", context:"Длинный контекст"};
 const STAGES = {connect:"Подключение", verify:"Подлинность", tasks:"Задачи", done:"Итог"};
 const PROBE_NAMES = {en:"Английский", ru:"Русский", code:"Код", num:"Числа", mix:"Эмодзи/иероглифы"};
@@ -506,7 +532,7 @@ const api = async (path, body) => {
 };
 
 let mode = store.get("mode","api"), prov = store.get("prov","anthropic"), sub = store.get("sub","claude-cli");
-let cats = store.get("cats", Object.keys(CAT)), env = {}, runId = null, since = 0, taskTotal = 0, taskDone = 0, catScores = {};
+let cats = store.get("cats", Object.keys(CAT)).filter(c => c in CAT), env = {}, runId = null, since = 0, taskTotal = 0, taskDone = 0, catScores = {};
 
 /* ---------- tabs ---------- */
 $$("nav.tabs button").forEach(b => b.onclick = () => {
@@ -603,6 +629,7 @@ function cfg(){
     repeat: +$("#repeat").value || 1, workers: +$("#workers").value || 4,
     max_tokens: +$("#maxTokens").value || 4096, ctx_chars: cats.includes("context") ? (+$("#ctxChars").value || 0) : 0,
     claimed: $("#claimed").value.trim(), verify: $("#doVerify").checked, behavior: $("#doBehavior").checked,
+    public: pubSel(), hf_token: $("#hfToken").value.trim(),
     save_ref: $("#saveRef").checked ? ($("#refName").value.trim() || ($("#claimed").value.trim() || $("#model").value.trim()) + " (официальный)") : ""};
   if (mode === "api") {
     Object.assign(c, {provider: PROVIDERS[prov].provider, base_url: $("#baseUrl").value.trim(), key: $("#apiKey").value.trim()});
@@ -610,6 +637,38 @@ function cfg(){
   } else c.provider = sub;
   return c;
 }
+
+/* ---------- public benchmarks ---------- */
+let PUB = {}, pubCached = [];
+const PUB_IN = {mmlu_pro: 350, gpqa: 450, hle: 600, arc_agi_2: 6000, livecodebench: 900};
+function pubSel(){
+  const o = {};
+  $$("#pubList .pbrow").forEach(r => { if (r.querySelector("input[type=checkbox]").checked) o[r.dataset.b] = +r.querySelector("input[type=number]").value || 0; });
+  return o;
+}
+function pubEstimate(){
+  const sel = pubSel(), keys = Object.keys(sel).filter(k => sel[k]);
+  $("#hfWrap").classList.toggle("hide", !keys.some(k => PUB[k]?.gated));
+  if (!keys.length) { $("#pubEst").innerHTML = ""; store.set("pub", sel); return; }
+  const tot = keys.reduce((a, k) => a + sel[k] * (PUB_IN[k] + PUB[k].out_tokens), 0);
+  const ov = overhead ? keys.reduce((a, k) => a + sel[k], 0) * overhead : 0;
+  $("#pubEst").innerHTML = `Примерно <b>${fmt(tot + ov)}</b> токенов на прогон публичных бенчмарков${ov ? ` (из них ≈${fmt(ov)} — скрытая инструкция сервиса)` : ""}.`;
+  store.set("pub", sel);
+}
+async function loadPublic(){
+  try { const d = await api("/api/public"); PUB = d.benches; pubCached = d.cached || []; } catch { return; }
+  const saved = store.get("pub", {});
+  $("#pubList").innerHTML = Object.entries(PUB).map(([k, b]) => `<label class="pbrow" data-b="${k}">
+      <input type="checkbox" ${saved[k] ? "checked" : ""}>
+      <span><span class="nm">${esc(b.name)}</span>${b.gated ? '<span class="lock">нужен токен HF</span>' : ""}${pubCached.some(c => c.startsWith(k + "_")) ? '<span class="cachedb">скачан</span>' : ""}
+        <div class="ab">${esc(b.about)}</div></span>
+      <input class="in" type="number" min="1" max="500" value="${saved[k] || b.default_n}" title="сколько заданий"></label>`).join("");
+  $$("#pubList input").forEach(i => i.oninput = i.onchange = pubEstimate);
+  const t = store.get("hfToken", ""); if (t) { $("#hfToken").value = t; $("#hfRemember").checked = true; }
+  pubEstimate();
+}
+$("#hfToken").oninput = () => { if ($("#hfRemember").checked) store.set("hfToken", $("#hfToken").value.trim()); };
+$("#hfRemember").onchange = e => store.set("hfToken", e.target.checked ? $("#hfToken").value.trim() : "");
 
 /* ---------- local models ---------- */
 async function localScan(quiet){
@@ -727,8 +786,9 @@ async function start(onlyVerify){
   if (mode === "api" && prov === "local" && !c.model) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Выберите модель из найденных"; return; }
   if (mode === "api" && ((!c.key && prov !== "local") || !c.model)) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Нужны ключ и модель"; return; }
   if (onlyVerify) { c.only = ["__none__"]; c.ctx_chars = 0; c.verify = true; }
-  else if (!cats.length && !c.verify) return;
+  else if (!cats.length && !c.verify && !Object.values(c.public).some(Boolean)) return;
   else if (!cats.length) { c.only = ["__none__"]; c.ctx_chars = 0; }
+  if (onlyVerify) c.public = {};
   resetView(c);
   $("#runBtn").disabled = $("#verifyBtn").disabled = true; $("#stopBtn").classList.remove("hide");
   const r = await api("/api/run", c);
@@ -836,9 +896,9 @@ function handle(ev){
     if (!ev.ffmpeg && ev.tasks.some(t => t.cat === "montage")) $("#statusRight").textContent = "ffmpeg не найден — монтаж проверяется по тексту команды";
     const groups = {};
     ev.tasks.forEach(t => (groups[t.cat] ||= []).push(t));
-    $("#tasks").innerHTML = Object.entries(groups).map(([c, ts]) => `<div class="grp"><h3>${CAT[c] || c}</h3>` +
+    $("#tasks").innerHTML = Object.entries(groups).map(([c, ts]) => `<div class="grp"><h3>${CAT[c] || PUB_NAMES[c] || c}</h3>` +
       ts.map(t => `<div class="task pending" id="t-${t.id}"><div class="dot"></div><div><div class="nm">${t.id}</div><div class="nt">${esc(t.desc || "в очереди")}</div></div><div class="sc"></div></div>`).join("") + "</div>").join("");
-    $("#bars").innerHTML = Object.keys(groups).map(c => `<div class="bar" id="b-${c}"><span>${CAT[c] || c}</span><div class="tr"><div class="fl"></div></div><span class="n">—</span></div>`).join("");
+    $("#bars").innerHTML = Object.keys(groups).map(c => `<div class="bar" id="b-${c}"><span>${CAT[c] || PUB_NAMES[c] || c}</span><div class="tr"><div class="fl"></div></div><span class="n">—</span></div>`).join("");
     $("#statusTxt").textContent = `0 / ${taskTotal}`;
   }
   if (ev.type === "task") {
@@ -921,7 +981,7 @@ $("#cmpBtn").onclick = () => {
   const fps = sel.map(h => h.health?.fingerprint_in_tokens), fpDiff = false;
   let html = `<tr><th></th>${sel.map(h => `<th class="num">${esc(h.label)}<div class="hint" style="margin:0">${esc(h.date)}</div></th>`).join("")}</tr>`;
   html += `<tr><td><b>ИТОГ</b></td>${sel.map(h => cell(h.summary?.TOTAL)).join("")}</tr>`;
-  html += cats.map(c => `<tr><td>${CAT[c] || c}</td>${sel.map(h => cell(h.summary?.[c])).join("")}</tr>`).join("");
+  html += cats.map(c => `<tr><td>${CAT[c] || PUB_NAMES[c] || c}</td>${sel.map(h => cell(h.summary?.[c])).join("")}</tr>`).join("");
   html += `<tr><td>Токены вход / выход</td>${sel.map(h => `<td class="num">${h.tokens ? fmt(h.tokens.in) + " / " + fmt(h.tokens.out) : "—"}</td>`).join("")}</tr>`;
   html += `<tr><td>Задержка, с</td>${sel.map(h => `<td class="num">${esc(h.health?.ping_sec ?? "—")}</td>`).join("")}</tr>`;
   html += `<tr><td>Токенов/с</td>${sel.map(h => `<td class="num">${esc(h.health?.tok_per_sec ?? "—")}</td>`).join("")}</tr>`;
@@ -944,12 +1004,13 @@ const SIGNALS = [
 // area, benchmarks, status (hot|mid|sat), status text, можно ли у нас
 const INDUSTRY = [
   ["Код (агенты)", "SWE-bench Pro, Terminal-Bench 2.x", "hot", "главные для кода", "<b>Нет:</b> нужен Docker и миллионы токенов на прогон"],
-  ["Код (задачи)", "LiveCodeBench", "hot", "актуален", "<b>Да, мини-версия:</b> задачи с тестами — как наши «Сложные»"],
+  ["Код (задачи)", "LiveCodeBench", "hot", "актуален", "<b>Есть:</b> мини-версия, код запускается на тестах"],
   ["Инструменты", "τ²-bench, BFCL v4, MCP-Atlas", "hot", "актуальны", "<b>Частично:</b> у нас голосовые команды → инструменты"],
   ["Управление ПК", "OSWorld-Verified", "mid", "почти насыщен", "<b>Нет:</b> нужна виртуальная машина и скриншоты"],
   ["Веб-поиск", "BrowseComp", "hot", "актуален", "<b>Нет:</b> нужен доступ модели к поиску"],
-  ["Экспертные знания", "Humanity's Last Exam, GPQA Diamond", "mid", "HLE актуален, GPQA насыщен", "<b>Да, выборка HLE:</b> есть открытая часть вопросов"],
-  ["Абстрактное мышление", "ARC-AGI-2", "hot", "актуален", "<b>Можно:</b> текстовые сетки, но дорого по токенам"],
+  ["Экспертные знания", "Humanity's Last Exam, GPQA Diamond", "mid", "HLE актуален, GPQA насыщен", "<b>Есть:</b> мини-версии HLE и GPQA (нужен токен Hugging Face)"],
+  ["Абстрактное мышление", "ARC-AGI-2", "hot", "актуален", "<b>Есть:</b> мини-версия, самые компактные задачи"],
+  ["Знания", "MMLU-Pro", "mid", "почти насыщен", "<b>Есть:</b> мини-версия, 10 вариантов ответа"],
   ["Математика", "AIME 2025/2026, FrontierMath", "sat", "AIME насыщен (95–100%)", "<b>Можно, но мало толку:</b> сильные модели решают всё"],
   ["Реальная работа", "GDPval", "hot", "актуален", "<b>Нет:</b> оценивают эксперты-люди"],
   ["Фактология", "SimpleQA Verified", "hot", "актуален", "<b>Да, и полезно:</b> дешёвые модели-подделки знают меньше фактов"],
@@ -963,16 +1024,16 @@ async function loadCatalog(){
   const cats = await api(`/api/catalog?ctx=${+$("#ctxChars").value || 80000}`);
   catalogLoaded = true;
   const nTasks = cats.reduce((a, c) => a + c.tasks.length, 0);
-  $("#lead").innerHTML = [[nTasks, "задач"], [cats.length, "категорий"], [SIGNALS.length, "сигналов подлинности"], ["0 ₽", "кроме токенов вашего ключа"]]
+  $("#lead").innerHTML = [[nTasks, "своих задач"], [cats.length, "категорий"], [SIGNALS.length, "сигналов подлинности"], ["0 ₽", "кроме токенов вашего ключа"]]
     .map(([v, k]) => `<div class="tile"><div class="v">${v}</div><div class="k">${k}</div></div>`).join("");
   $("#cgrid").innerHTML = cats.map((c, i) => `<div class="ccard" style="animation-delay:${i * 60}ms">
       <div class="hd"><span class="ic">${esc(c.icon || "•")}</span><span class="t">${esc(c.name)}</span>
-        <span class="lvl ${esc(c.level || "")}">${esc(c.level || "")}</span><span class="cnt">${c.tasks.length} задач</span></div>
+        <span class="lvl ${esc(c.level || "")}">${esc(c.level || "")}</span><span class="cnt">${c.count_label || c.tasks.length + " задач"}</span></div>
       <div class="how">${esc(c.how || "")}</div>
       <div class="chips2">${(c.analogs || []).map(a => `<span class="chip2">${esc(a)}</span>`).join("")}</div>
       ${c.note ? `<div class="nt">${esc(c.note)}</div>` : ""}
-      <details class="tl"><summary>Список задач</summary>${c.tasks.map(t => `<div class="ti"><div class="id">${esc(t.id)}</div>
-        <div class="d">${esc(t.desc)}</div><details><summary>что видит модель</summary><pre>${esc(t.prompt)}</pre></details></div>`).join("")}</details>
+      ${c.tasks.length ? "" : "<!--"}<details class="tl"><summary>Список задач</summary>${c.tasks.map(t => `<div class="ti"><div class="id">${esc(t.id)}</div>
+        <div class="d">${esc(t.desc)}</div><details><summary>что видит модель</summary><pre>${esc(t.prompt)}</pre></details></div>`).join("")}</details>${c.tasks.length ? "" : "-->"}
     </div>`).join("");
   $("#sig").innerHTML = SIGNALS.map(([n, w, d]) => `<div class="tile"><div class="k">${n}</div><div class="v">${d}</div>
     <div class="str" title="надёжность сигнала">${[1,2,3,4,5].map(k => `<i class="${k <= w ? "on" : ""}"></i>`).join("")}</div></div>`).join("");
@@ -1072,7 +1133,7 @@ $("#bCsv").onclick = () => {
 
 /* ---------- init ---------- */
 (async () => {
-  setProv(prov); setSub(sub); setMode(mode); paintCats();
+  setProv(prov); setSub(sub); setMode(mode); paintCats(); loadPublic();
   try {
     env = await api("/api/env");
     const chip = (ok, n) => `<span class="chip ${ok ? "on" : "off"}"><b>${ok ? "●" : "○"}</b> ${n}</span>`;
