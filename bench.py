@@ -36,12 +36,13 @@ def explain(err, base=""):
     if code == 403 and "api.anthropic.com" in base:
         return ("Anthropic отклонил запрос (403): обычно это блокировка региона (нужен VPN) "
                 "или ключ не от Anthropic. Если ключ выдал другой сервис — выберите «Другой сервис» и укажите его адрес API.")
+    srv = f" Ответ сервера: {body[:160]}" if body.strip() else ""
     if code == 403:
-        return "Доступ запрещён (403): ключ без прав на эту модель, регион заблокирован или ключ от другого сервиса."
+        return "Доступ запрещён (403): ключ без прав на эту модель, регион заблокирован или ключ от другого сервиса." + srv
     if code == 402 or "insufficient" in low or "quota" in low or "balance" in low or "credit" in low:
         return "Нет средств или исчерпана квота на ключе."
     if code == 404:
-        return "Не найдено (404): неверный адрес API или название модели."
+        return "Не найдено (404): неверный адрес API или название модели." + srv
     if code == 429:
         return "Слишком много запросов (429): лимит ключа, попробуйте позже или уменьшите «Параллельно»."
     if code == 0:
@@ -64,14 +65,17 @@ def detect(base_url, key, model=None, timeout=30):
         cl = Client(prov, b, key, model, 32, timeout, auth=auth, retries=0)
         name = f"{'OpenAI' if prov == 'openai' else 'Anthropic'}-совместимый, {auth}, {cl.base}"
         try:
-            if model:
-                r = cl.chat("Ответь одним словом: ok", max_tokens=32)
-                if not r["text"] and r["out"] is None:
-                    raise ApiError(-1, "пустой ответ")
-            else:
-                ms = cl.models()
-                if not ms:
-                    raise ApiError(-1, "список моделей пуст — укажите модель")
+            # сначала список моделей: так протокол определяется даже если выбранная модель недоступна
+            try:
+                if cl.models():
+                    return {"provider": prov, "base_url": cl.base, "auth": auth, "variant": name}, tries
+                raise ApiError(-1, "список моделей пуст — укажите модель")
+            except ApiError as e:
+                if not model or e.code in (0, 401):
+                    raise
+            r = cl.chat("Ответь одним словом: ok", max_tokens=32)
+            if not r["text"] and r["out"] is None:
+                raise ApiError(-1, "пустой ответ")
             return {"provider": prov, "base_url": cl.base, "auth": auth, "variant": name}, tries
         except Exception as e:
             tries.append({"variant": name, "error": explain(e, cl.base)})
