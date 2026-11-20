@@ -6,6 +6,7 @@ from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
 import bench
+import verify
 
 ROOT = Path(__file__).parent
 RESULTS = ROOT / "results"
@@ -16,7 +17,8 @@ RUNS = {}  # id -> {"events": [], "status": "running|done|error", "cancel": Even
 def env_info():
     return {"claude_cli": bool(shutil.which("claude")), "codex_cli": bool(shutil.which("codex")),
             "ffmpeg": bool(bench.FFMPEG and bench.FFPROBE),
-            "categories": sorted({t["cat"] for t in bench.TASKS} | {"context"})}
+            "categories": sorted({t["cat"] for t in bench.TASKS} | {"context"}),
+            "tiktoken": bool(verify.builtin_refs())}
 
 
 def check_key(cfg):
@@ -72,8 +74,12 @@ def list_results():
             d = json.loads(f.read_text(encoding="utf-8"))
         except Exception:
             continue
+        if not isinstance(d, dict) or "summary" not in d:
+            continue
         out.append({"file": f.name, "label": d.get("label"), "date": d.get("date"), "provider": d.get("provider"),
-                    "summary": d.get("summary"), "health": d.get("health"),
+                    "summary": d.get("summary"), "health": d.get("health"), "tokens": d.get("tokens"),
+                    "claimed": d.get("claimed"), "verdict": ((d.get("verify") or {}).get("verdict") or {}).get("level"),
+                    "has_fp": bool(((d.get("verify") or {}).get("fingerprint") or {}).get("deltas")),
                     "tasks": {t["id"]: t["score"] for t in d.get("tasks", [])}})
     return out
 
@@ -92,11 +98,14 @@ class H(BaseHTTPRequestHandler):
 
     def _json(self, data, code=200):
         b = json.dumps(data, ensure_ascii=False).encode()
-        self.send_response(code)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(b)))
-        self.end_headers()
-        self.wfile.write(b)
+        try:
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(b)))
+            self.end_headers()
+            self.wfile.write(b)
+        except (BrokenPipeError, ConnectionResetError):
+            pass  # вкладку закрыли или перезагрузили
 
     def _body(self):
         n = int(self.headers.get("Content-Length") or 0)
@@ -124,6 +133,9 @@ class H(BaseHTTPRequestHandler):
             self._json({"status": run["status"], "events": run["events"][since:], "next": len(run["events"])})
         elif u.path == "/api/results":
             self._json(list_results())
+        elif u.path == "/api/refs":
+            self._json([{k: r.get(k) for k in ("name", "family", "model", "date", "builtin", "deltas", "summary", "tok_per_sec")}
+                        for r in verify.load_refs(RESULTS)])
         elif u.path == "/api/result":
             f = RESULTS / Path(q.get("file", "")).name
             self._json(json.loads(f.read_text(encoding="utf-8")) if f.is_file() else {"error": "not found"})
@@ -143,6 +155,17 @@ class H(BaseHTTPRequestHandler):
             if run:
                 run["cancel"].set()
             self._json({"ok": bool(run)})
+        elif u.path == "/api/refs/add":
+            f = RESULTS / Path(body.get("file", "")).name
+            try:
+                run = json.loads(f.read_text(encoding="utf-8"))
+                verify.save_ref(RESULTS, run, (body.get("name") or run.get("model") or "эталон").strip())
+                self._json({"ok": True})
+            except Exception as e:
+                self._json({"ok": False, "error": str(e)})
+        elif u.path == "/api/refs/delete":
+            verify.delete_ref(RESULTS, body.get("name", ""))
+            self._json({"ok": True})
         elif u.path == "/api/delete":
             f = RESULTS / Path(body.get("file", "")).name
             if f.is_file():
