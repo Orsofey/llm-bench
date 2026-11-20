@@ -872,7 +872,15 @@ def catalog(ctx_chars=80000):
             prompt = prompt[:350] + f"\n… [ещё {len(prompt) - 550} символов] …\n" + prompt[-200:]
         c["tasks"].append({"id": t["id"], "desc": t.get("desc") or TASK_DESC.get(t["id"], ""), "prompt": prompt})
     order = list(CATEGORY_INFO)
-    return sorted(out.values(), key=lambda c: order.index(c["id"]) if c["id"] in order else 99)
+    res = sorted(out.values(), key=lambda c: order.index(c["id"]) if c["id"] in order else 99)
+    import public
+    for b, info in public.BENCHES.items():
+        res.append({"id": b, "name": info["name"], "icon": "★", "level": "публичный",
+                    "how": info["about"] + ". Задания скачиваются с источника один раз, выборка фиксирована — "
+                           "все ключи получают одинаковые вопросы.",
+                    "analogs": ["нужен токен Hugging Face"] if info["gated"] else [], "note": info["site"],
+                    "count_label": f"по умолчанию {info['default_n']}", "tasks": []})
+    return res
 
 
 # ======================= LONG CONTEXT =======================
@@ -932,7 +940,7 @@ def run_task(cl, task, repeat):
     for _ in range(repeat):
         try:
             usage["requests"] += 1
-            r = cl.chat(task["prompt"])
+            r = cl.chat(task["prompt"], max_tokens=max(task.get("max_tokens") or 0, cl.max_tokens) if task.get("max_tokens") else None)
             sc, note = task["check"](r["text"])
             usage["in"] += r["in"] or 0
             usage["out"] += r["out"] or 0
@@ -993,7 +1001,7 @@ def run_benchmark(cfg, emit=lambda ev: None, cancel=None):
     t_start = time.time()
     cl.on_usage = lambda u: emit({"type": "usage", **u})
     emit({"type": "stage", "stage": "connect", "label": label, "base": cl.base,
-          "plan": ["connect"] + (["verify"] if cfg.get("verify", True) else []) + (["tasks"] if tasks else []) + ["done"]})
+          "plan": ["connect"] + (["verify"] if cfg.get("verify", True) else []) + (["tasks"] if tasks or any((cfg.get("public") or {}).values()) else []) + ["done"]})
     emit({"type": "activity", "text": "Проверяю ключ, задержку и скорость генерации"})
     h = {}
     if not cfg.get("skip_health"):
@@ -1017,6 +1025,13 @@ def run_benchmark(cfg, emit=lambda ev: None, cancel=None):
         return None
 
     results = []
+    if any((cfg.get("public") or {}).values()) and not cancel.is_set():
+        import public
+        emit({"type": "stage", "stage": "tasks"})
+        ptasks, pwarns = public.build(cfg["public"], cfg.get("hf_token"), emit)
+        for w in pwarns:
+            emit({"type": "warning", "message": w})
+        tasks = tasks + ptasks
     if tasks:
         emit({"type": "stage", "stage": "tasks"})
         emit({"type": "start", "label": label, "base": cl.base, "ffmpeg": bool(FFMPEG),

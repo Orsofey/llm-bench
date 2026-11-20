@@ -13,7 +13,7 @@ import verify
 ROOT = Path(__file__).parent
 RESULTS = ROOT / "results"
 PORT = int(os.environ.get("LLM_BENCH_PORT", 8787))
-_WATCH = [Path(__file__).parent / n for n in ("bench.py", "verify.py", "app.py", "batch.py", "local.py")]
+_WATCH = [Path(__file__).parent / n for n in ("bench.py", "verify.py", "app.py", "batch.py", "local.py", "public.py")]
 _STARTED = {str(f): f.stat().st_mtime for f in _WATCH if f.exists()}
 RUNS = {}  # id -> {"events": [], "status": "running|done|error", "cancel": Event}
 
@@ -147,6 +147,10 @@ class H(BaseHTTPRequestHandler):
             if not local.is_local(f"http://{host}/"):
                 return self._json({"error": "Можно сканировать только этот компьютер или локальную сеть"}, 400)
             self._json(local.scan(host, [p for p in (q.get("ports") or "").split(",") if p.strip()]))
+        elif u.path == "/api/public":
+            import public
+            self._json({"benches": public.BENCHES,
+                        "cached": sorted(f.stem for f in public.CACHE.glob("*.json")) if public.CACHE.exists() else []})
         elif u.path == "/api/batch/last":
             self._json(batch.last_batch(RESULTS) or {})
         elif u.path == "/api/catalog":
