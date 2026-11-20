@@ -137,6 +137,8 @@ class H(BaseHTTPRequestHandler):
             self._json({"status": run["status"], "events": run["events"][since:], "next": len(run["events"])})
         elif u.path == "/api/results":
             self._json(list_results())
+        elif u.path == "/api/catalog":
+            self._json(bench.catalog(int(q.get("ctx", 80000))))
         elif u.path == "/api/refs":
             self._json([{k: r.get(k) for k in ("name", "family", "model", "date", "builtin", "deltas", "summary", "tok_per_sec")}
                         for r in verify.load_refs(RESULTS)])
