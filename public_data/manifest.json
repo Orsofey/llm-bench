@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "created_utc": "2026-11-24T08:56:55Z",
+  "sources": {
+    "mmlu_pro": "https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro",
+    "arc_agi_2": "https://github.com/arcprize/ARC-AGI-2/tree/main/data/evaluation",
+    "livecodebench": "https://huggingface.co/datasets/livecodebench/code_generation"
+  },
+  "note": "Fixed mini-subsets, not official leaderboard evaluation. GPQA/HLE are downloaded by the app locally after user authorization."
+}

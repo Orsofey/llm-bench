@@ -12,7 +12,6 @@ LLM-бенчмарк: проверка ключа/провайдера + кач�
 """
 import argparse, json, os, re, random, shlex, shutil, subprocess, sys, tempfile, threading, time
 import urllib.request, urllib.error
-import local
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -40,10 +39,8 @@ def explain(err, base=""):
     srv = f" Ответ сервера: {body[:160]}" if body.strip() else ""
     if code == 403:
         return "Доступ запрещён (403): ключ без прав на эту модель, регион заблокирован или ключ от другого сервиса." + srv
-    if is_balance_error(err):
-        return ("Сервис отказал: не хватает баланса на запрос. Часто это не реальный остаток, а резерв: сервис заранее "
-                "блокирует стоимость max_tokens × цену модели для каждого параллельного запроса. Уменьшите Max tokens "
-                "(1000–2000) и «Параллельно» до 1–2 или выберите модель дешевле." + srv)
+    if code == 402 or "insufficient" in low or "quota" in low or "balance" in low or "credit" in low:
+        return "Нет средств или исчерпана квота на ключе."
     if code == 404:
         return "Не найдено (404): неверный адрес API или название модели." + srv
     if code == 429:
@@ -53,11 +50,6 @@ def explain(err, base=""):
     if code == -1:
         return body
     return f"HTTP {code}: {body[:300]}"
-
-
-def is_balance_error(err):
-    code, low = getattr(err, "code", None), str(getattr(err, "body", err)).lower()
-    return code == 402 or any(w in low for w in ("insufficient", "balance", "quota", "credit", "баланс", "средств"))
 
 
 def detect(base_url, key, model=None, timeout=30):
@@ -94,15 +86,10 @@ def detect(base_url, key, model=None, timeout=30):
 
 class Client:
     def __init__(self, provider, base_url, key, model, max_tokens=4096, timeout=300, auth=None, retries=3):
-        self.p, self.key, self.model = provider, key or "local", model
+        self.p, self.key, self.model = provider, key, model
         self.max_tokens, self.timeout, self.retries = max_tokens, timeout, retries
         self.auth = auth or ("x-api-key" if provider == "anthropic" else "bearer")
         self.usage = {"requests": 0, "in": 0, "out": 0, "errors": 0}
-        self.balance_streak = 0  # подряд отказов «нет баланса»
-        self.balance_retries = 0
-        self.throttled = False  # после отказа по балансу — строго по одному запросу
-        self.ok_after_throttle = 0
-        self._serial = threading.Lock()
         self.on_usage = None
         self._lock = threading.Lock()
         if provider in CLI_PROVIDERS:
@@ -117,7 +104,7 @@ class Client:
         req = urllib.request.Request(url, data, {**headers, "Content-Type": "application/json"}, method=method)
         for attempt in range(self.retries + 1):
             try:
-                with local.urlopen(req, self.timeout) as r:
+                with urllib.request.urlopen(req, timeout=self.timeout) as r:
                     raw = r.read()
                 try:
                     return json.loads(raw)
@@ -205,43 +192,13 @@ class Client:
         return text, tin, tout, None
 
     def chat(self, prompt, max_tokens=None, temperature=0):
-        mt = max_tokens or self.max_tokens
-        if self.throttled:
-            mt = min(mt, 1024)
-            with self._serial:
-                return self._chat_balance(prompt, mt, temperature, retries=2)
-        return self._chat_balance(prompt, mt, temperature, retries=0, first=True)
-
-    def _chat_balance(self, prompt, mt, temperature, retries, first=False):
-        for attempt in range(retries + 1):
-            try:
-                r = self._chat(prompt, mt, temperature)
-            except ApiError as e:
-                self._count(0, 0, error=True)
-                if not is_balance_error(e):
-                    raise
-                with self._lock:
-                    self.balance_retries += 1
-                if first:
-                    # возможно, сервис резервирует max_tokens под каждый параллельный запрос:
-                    # переходим в режим «по одному запросу» с лимитом 1024 и повторяем
-                    self.throttled = True
-                    time.sleep(2)
-                    return self.chat(prompt, mt, temperature)
-                if attempt < retries:
-                    time.sleep(3 * (attempt + 1))
-                    continue
-                with self._lock:
-                    self.balance_streak += 1
-                raise
-            except Exception:
-                self._count(0, 0, error=True)
-                raise
-            self.balance_streak = 0
-            if self.throttled:
-                self.ok_after_throttle += 1
-            self._count(r["in"] or 0, r["out"] or 0)
-            return r
+        try:
+            r = self._chat(prompt, max_tokens, temperature)
+        except Exception:
+            self._count(0, 0, error=True)
+            raise
+        self._count(r["in"] or 0, r["out"] or 0)
+        return r
 
     def _count(self, tin, tout, error=False):
         with self._lock:
@@ -345,7 +302,60 @@ print("__SCORE__", _ok, len(_TESTS))
 """
 
 
+def _run_py_embedded(code, tests, timeout):
+    """Android: выполняет чистые Python-задачи без недоступного subprocess Python."""
+    box = {}
+
+    class BenchTimeout(BaseException):
+        pass
+
+    def worker():
+        ns = {"__name__": "__llm_bench_task__"}
+
+        def _raises(fn, exc):
+            try:
+                fn()
+            except exc:
+                return True
+            except Exception:
+                return False
+            return False
+
+        deadline = time.monotonic() + timeout
+
+        def trace(frame, event, arg):
+            if time.monotonic() > deadline:
+                raise BenchTimeout()
+            return trace
+
+        try:
+            sys.settrace(trace)
+            exec(compile(code, "<llm-response>", "exec"), ns)
+            ns["_raises"] = _raises
+            ok = 0
+            for test in tests:
+                try:
+                    if eval(test, ns):
+                        ok += 1
+                except Exception:
+                    pass
+            box["result"] = (ok / len(tests), f"тесты {ok}/{len(tests)}")
+        except BenchTimeout:
+            box["result"] = (0.0, "таймаут")
+        except Exception as e:
+            box["result"] = (0.0, "не запустилось: " + str(e)[:120])
+        finally:
+            sys.settrace(None)
+
+    thread = threading.Thread(target=worker, name="llm-bench-code", daemon=True)
+    thread.start()
+    thread.join(timeout + 0.5)
+    return (0.0, "таймаут") if thread.is_alive() else box.get("result", (0.0, "не запустилось"))
+
+
 def run_py(code, tests, timeout=15):
+    if os.environ.get("LLM_BENCH_PLATFORM") == "android" or getattr(sys, "frozen", False):
+        return _run_py_embedded(code, tests, timeout)
     with tempfile.TemporaryDirectory() as d:
         p = Path(d) / "t.py"
         p.write_text(code + HARNESS.format(tests=tests), encoding="utf-8")
@@ -833,56 +843,6 @@ TASK_DESC = {
 }
 
 
-CATEGORY_INFO = {
-    "code": {"name": "Кодинг", "icon": "</>",
-             "how": "Модель пишет функции на Python. Код запускается в изолированном процессе на скрытых тестах; балл — доля пройденных тестов.",
-             "analogs": ["HumanEval", "MBPP"], "level": "базовый",
-             "note": "Сильные модели решают почти всё — это проверка «жив ли вообще» код, а не потолок."},
-    "hard": {"name": "Сложные", "icon": "◆",
-             "how": "Код с жёсткими тестами (включая тест на скорость) и задачи с единственным точным ответом: логика, счёт, даты, ловушки.",
-             "analogs": ["LiveCodeBench", "AIME (стиль)", "ловушки токенизации"], "level": "сложный",
-             "note": "Здесь сильные и слабые модели расходятся сильнее всего — главный показатель качества."},
-    "montage": {"name": "Монтаж", "icon": "▶",
-                "how": "Команды ffmpeg реально рендерятся на тестовом видео и проверяются через ffprobe; SRT, монтажный лист и таймкоды сверяются с эталоном.",
-                "analogs": ["собственный — публичного аналога нет"], "level": "прикладной",
-                "note": "Без ffmpeg на компьютере команды проверяются по тексту."},
-    "agent": {"name": "Агент (голос)", "icon": "◉",
-              "how": "Распознанная речь с ошибками и словами-паразитами → JSON вызовов инструментов. Проверяется порядок вызовов и запрет опасных действий без подтверждения.",
-              "analogs": ["BFCL", "τ²-bench"], "level": "прикладной", "note": "Сценарий вашего AI Agent."},
-    "funnel": {"name": "Воронка", "icon": "▽",
-               "how": "Расчёт CTR/CR/CPA/ROMI с допуском, поиск аномалии в данных, ответ строго по тексту без выдумок.",
-               "analogs": ["аналитические бенчмарки", "SimpleQA (честность)"], "level": "прикладной", "note": ""},
-    "instruct": {"name": "Инструкции", "icon": "≡",
-                 "how": "Жёсткие ограничения формата на русском (число пунктов, длина, чистый JSON) проверяются правилами.",
-                 "analogs": ["IFEval", "MERA"], "level": "базовый", "note": ""},
-    "context": {"name": "Длинный контекст", "icon": "⋯",
-                "how": "Секретный код спрятан на 70% глубины текста длиной ~80 тыс. символов (размер настраивается). Ловит и слабую модель, и сервис, который обрезает контекст.",
-                "analogs": ["RULER", "MRCR", "needle in a haystack"], "level": "технический", "note": ""},
-}
-
-
-def catalog(ctx_chars=80000):
-    """Описание всех тестов для интерфейса."""
-    tasks = TASKS + ([needle_task(ctx_chars)] if ctx_chars else [])
-    out = {}
-    for t in tasks:
-        c = out.setdefault(t["cat"], {**CATEGORY_INFO.get(t["cat"], {"name": t["cat"]}), "id": t["cat"], "tasks": []})
-        prompt = t["prompt"]
-        if len(prompt) > 700:
-            prompt = prompt[:350] + f"\n… [ещё {len(prompt) - 550} символов] …\n" + prompt[-200:]
-        c["tasks"].append({"id": t["id"], "desc": t.get("desc") or TASK_DESC.get(t["id"], ""), "prompt": prompt})
-    order = list(CATEGORY_INFO)
-    res = sorted(out.values(), key=lambda c: order.index(c["id"]) if c["id"] in order else 99)
-    import public
-    for b, info in public.BENCHES.items():
-        res.append({"id": b, "name": info["name"], "icon": "★", "level": "публичный",
-                    "how": info["about"] + ". Задания скачиваются с источника один раз, выборка фиксирована — "
-                           "все ключи получают одинаковые вопросы.",
-                    "analogs": ["нужен токен Hugging Face"] if info["gated"] else [], "note": info["site"],
-                    "count_label": f"по умолчанию {info['default_n']}", "tasks": []})
-    return res
-
-
 # ======================= LONG CONTEXT =======================
 def needle_task(chars):
     rnd = random.Random(42)
@@ -940,13 +900,13 @@ def run_task(cl, task, repeat):
     for _ in range(repeat):
         try:
             usage["requests"] += 1
-            r = cl.chat(task["prompt"], max_tokens=max(task.get("max_tokens") or 0, cl.max_tokens) if task.get("max_tokens") else None)
+            r = cl.chat(task["prompt"])
             sc, note = task["check"](r["text"])
             usage["in"] += r["in"] or 0
             usage["out"] += r["out"] or 0
             usage["sec"] += r["sec"]
         except Exception as e:
-            sc, note = 0.0, "ошибка: " + (explain(e)[:160] if isinstance(e, ApiError) else str(e)[:150])
+            sc, note = 0.0, f"ошибка: {str(e)[:150]}"
         scores.append(float(sc))
         notes.append(note)
     return {"id": task["id"], "cat": task["cat"], "score": round(sum(scores) / len(scores), 3),
@@ -992,16 +952,21 @@ def run_benchmark(cfg, emit=lambda ev: None, cancel=None):
         cfg = {**cfg, **found}
     cl = Client(cfg["provider"], cfg.get("base_url"), cfg.get("key"), cfg.get("model"),
                 int(cfg.get("max_tokens") or 4096), int(cfg.get("timeout") or 300), auth=cfg.get("auth"))
-    ctx = int(cfg.get("ctx_chars") or 0)
-    tasks = TASKS + ([needle_task(ctx)] if ctx else [])
-    if cfg.get("only"):
-        tasks = [t for t in tasks if t["cat"] in cfg["only"]]
-    label = f"{cfg.get('model') or 'default'}{' [' + cfg['tag'] + ']' if cfg.get('tag') else ''}"
     out = Path(cfg.get("out") or Path(__file__).parent / "results")
+    public_keys = [k for k in (cfg.get("public") or []) if k]
+    if public_keys:
+        import public_bench
+        tasks = public_bench.tasks(public_keys, Path(os.environ.get("LLM_BENCH_DATA_DIR", str(out.parent))) / "public_cache", cfg.get("hf_token"), emit)
+    else:
+        ctx = int(cfg.get("ctx_chars") or 0)
+        tasks = TASKS + ([needle_task(ctx)] if ctx else [])
+        if cfg.get("only"):
+            tasks = [t for t in tasks if t["cat"] in cfg["only"]]
+    label = f"{cfg.get('model') or 'default'}{' [' + cfg['tag'] + ']' if cfg.get('tag') else ''}"
     t_start = time.time()
     cl.on_usage = lambda u: emit({"type": "usage", **u})
     emit({"type": "stage", "stage": "connect", "label": label, "base": cl.base,
-          "plan": ["connect"] + (["verify"] if cfg.get("verify", True) else []) + (["tasks"] if tasks or any((cfg.get("public") or {}).values()) else []) + ["done"]})
+          "plan": ["connect"] + (["verify"] if cfg.get("verify", True) else []) + (["tasks"] if tasks else []) + ["done"]})
     emit({"type": "activity", "text": "Проверяю ключ, задержку и скорость генерации"})
     h = {}
     if not cfg.get("skip_health"):
@@ -1025,30 +990,18 @@ def run_benchmark(cfg, emit=lambda ev: None, cancel=None):
         return None
 
     results = []
-    if any((cfg.get("public") or {}).values()) and not cancel.is_set():
-        import public
-        emit({"type": "stage", "stage": "tasks"})
-        ptasks, pwarns = public.build(cfg["public"], cfg.get("hf_token"), emit)
-        for w in pwarns:
-            emit({"type": "warning", "message": w})
-        tasks = tasks + ptasks
     if tasks:
         emit({"type": "stage", "stage": "tasks"})
         emit({"type": "start", "label": label, "base": cl.base, "ffmpeg": bool(FFMPEG),
               "tasks": [{"id": t["id"], "cat": t["cat"], "desc": t.get("desc") or TASK_DESC.get(t["id"], "")} for t in tasks]})
 
-        skipped = []
-
         def job(t):
             if cancel.is_set():
-                return None
-            if cl.balance_streak >= 3:
-                skipped.append(t["id"])
                 return None
             emit({"type": "task_start", "id": t["id"], "desc": t.get("desc") or TASK_DESC.get(t["id"], "")})
             return run_task(cl, t, int(cfg.get("repeat") or 1))
 
-        with ThreadPoolExecutor(int(cfg.get("workers") or 4)) as ex:
+        with ThreadPoolExecutor(1 if public_keys else int(cfg.get("workers") or 4)) as ex:
             for f in as_completed([ex.submit(job, t) for t in tasks]):
                 r = f.result()
                 if r:
@@ -1057,13 +1010,6 @@ def run_benchmark(cfg, emit=lambda ev: None, cancel=None):
         if cancel.is_set():
             emit({"type": "error", "message": "Остановлено"})
             return None
-        if skipped:
-            emit({"type": "warning", "message": f"Сервис 3 раза подряд отказал из-за баланса — {len(skipped)} задач пропущено "
-                                                "и в оценку не вошли. Уменьшите Max tokens и «Параллельно» и повторите."})
-        if cl.balance_retries and cl.ok_after_throttle:
-            emit({"type": "warning", "message": f"Сервис {cl.balance_retries} раз отказал «не хватает баланса», хотя часть запросов "
-                                                "потом прошла. Похоже, он резервирует max_tokens под каждый запрос: прогон переключён "
-                                                "на 1 запрос за раз с max_tokens=1024."})
     order = {t["id"]: i for i, t in enumerate(tasks)}
     results.sort(key=lambda r: order.get(r["id"], 0))
     summ = summarize(results) if results else {}
@@ -1140,8 +1086,6 @@ def main():
             tk = ev["tokens"]
             print(f"  запросов {tk['requests']}, токены: вход {tk['in']}, выход {tk['out']}, всего {tk['in'] + tk['out']}; "
                   f"время {ev['seconds']} с; файл {ev['file']}")
-        elif t == "warning":
-            print("⚠ " + ev["message"])
         elif t == "activity":
             print("  … " + ev["text"])
         elif t == "verify":

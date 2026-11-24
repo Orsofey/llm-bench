@@ -1,0 +1,506 @@
+[
+ {
+  "id": "livecodebench_atcoder_abc305_b",
+  "title": "ABCDEFG",
+  "content": "There are 7 points A, B, C, D, E, F, and G on a straight line, in this order. (See also the figure below.)\r\nThe distances between adjacent points are as follows.\n\n- Between A and B: 3\n- Between B and C: 1\n- Between C and D: 4\n- Between D and E: 1\n- Between E and F: 5\n- Between F and G: 9\n\n\nYou are given two uppercase English letters p and q. Each of p and q is A, B, C, D, E, F, or G, and it holds that p \\neq q.\r\nFind the distance between the points p and q.\n\nInput\n\nThe input is given from Standard Input in the following format:\np q\n\nOutput\n\nPrint the distance between the points p and q.\n\nConstraints\n\n\n- Each of p and q is A,B,C,D,E,F, or G.\n- p \\neq q\n\nSample Input 1\n\nA C\n\nSample Output 1\n\n4\r\n\nThe distance between the points A and C is 3 + 1 = 4.\n\nSample Input 2\n\nG B\n\nSample Output 2\n\n20\r\n\nThe distance between the points G and B is 9 + 5 + 1 + 4 + 1 = 20.\n\nSample Input 3\n\nC F\n\nSample Output 3\n\n10",
+  "starter_code": "",
+  "difficulty": "easy",
+  "contest_date": "2023-06-10T00:00:00",
+  "platform": "atcoder",
+  "tests": [
+   {
+    "input": "A C\n",
+    "output": "4\n",
+    "visibility": "public"
+   },
+   {
+    "input": "G B\n",
+    "output": "20\n",
+    "visibility": "public"
+   },
+   {
+    "input": "C F\n",
+    "output": "10\n",
+    "visibility": "public"
+   },
+   {
+    "input": "D E\n",
+    "output": "1\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "D A\n",
+    "output": "8\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "E A\n",
+    "output": "9\n",
+    "visibility": "hidden"
+   }
+  ],
+  "source_row": 25
+ },
+ {
+  "id": "livecodebench_atcoder_abc309_a",
+  "title": "Nine",
+  "content": "We have the following 3 \\times 3 board with integers from 1 through 9 written on it.\n\nYou are given two integers A and B between 1 and 9, where A < B.\nDetermine if the two squares with A and B written on them are adjacent horizontally.\n\nInput\n\nThe input is given from Standard Input in the following format:\nA B\n\nOutput\n\nPrint Yes if the two squares with A and B written on them are adjacent horizontally, and No otherwise.\n\nConstraints\n\n\n- 1 \\le A < B \\le 9\n- A and B are integers.\n\nSample Input 1\n\n7 8\n\nSample Output 1\n\nYes\r\n\nThe two squares with 7 and 8 written on them are adjacent horizontally, so print Yes.\n\nSample Input 2\n\n1 9\n\nSample Output 2\n\nNo\n\nSample Input 3\n\n3 4\n\nSample Output 3\n\nNo",
+  "starter_code": "",
+  "difficulty": "easy",
+  "contest_date": "2023-07-08T00:00:00",
+  "platform": "atcoder",
+  "tests": [
+   {
+    "input": "7 8\n",
+    "output": "Yes\n",
+    "visibility": "public"
+   },
+   {
+    "input": "1 9\n",
+    "output": "No\n",
+    "visibility": "public"
+   },
+   {
+    "input": "3 4\n",
+    "output": "No\n",
+    "visibility": "public"
+   },
+   {
+    "input": "6 7\n",
+    "output": "No\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "1 4\n",
+    "output": "No\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "3 6\n",
+    "output": "No\n",
+    "visibility": "hidden"
+   }
+  ],
+  "source_row": 45
+ },
+ {
+  "id": "livecodebench_atcoder_abc312_d",
+  "title": "Count Bracket Sequences",
+  "content": "You are given a non-empty string S consisting of (, ), and ?.\r\nThere are 2^x ways to obtain a new string by replacing each ? in S with ( and ), where x is the number of occurrences of ? in S.  Among them, find the number, modulo 998244353, of ways that yield a parenthesis string.\nA string is said to be a parenthesis string if one of the following conditions is satisfied.\n\n- It is an empty string.\n- It is a concatenation of (, A, and ), for some parenthesis string A.\n- It is a concatenation of A and B, for some non-empty parenthesis strings A and B.\n\nInput\n\nThe input is given from Standard Input in the following format:\nS\n\nOutput\n\nPrint the answer.\n\nConstraints\n\n\n- S is a non-empty string of length at most 3000 consisting of (, ), and ?.\n\nSample Input 1\n\n(???(?\n\nSample Output 1\n\n2\r\n\nReplacing S with ()()() or (())() yields a parenthesis string.\r\nThe other replacements do not yield a parenthesis string, so 2 should be printed.\n\nSample Input 2\n\n)))))\n\nSample Output 2\n\n0\n\nSample Input 3\n\n??????????????(????????(??????)?????????(?(??)\n\nSample Output 3\n\n603032273\r\n\nPrint the count modulo 998244353.",
+  "starter_code": "",
+  "difficulty": "medium",
+  "contest_date": "2023-07-29T00:00:00",
+  "platform": "atcoder",
+  "tests": [
+   {
+    "input": "(???(?\n",
+    "output": "2\n",
+    "visibility": "public"
+   },
+   {
+    "input": ")))))\n",
+    "output": "0\n",
+    "visibility": "public"
+   },
+   {
+    "input": "??????????????(????????(??????)?????????(?(??)\n",
+    "output": "603032273\n",
+    "visibility": "public"
+   },
+   {
+    "input": "?\n",
+    "output": "0\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "??\n",
+    "output": "1\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "?)\n",
+    "output": "1\n",
+    "visibility": "hidden"
+   }
+  ],
+  "source_row": 60
+ },
+ {
+  "id": "livecodebench_atcoder_abc311_b",
+  "title": "Vacation Together",
+  "content": "There are N people numbered 1 to N.\r\nYou are given their schedule for the following D days. The schedule for person i is represented by a string S_i of length D. If the j-th character of S_i is o, person i is free on the j-th day; if it is x, they are occupied that day.\nFrom these D days, consider choosing some consecutive days when all the people are free.\r\nHow many days can be chosen at most? If no day can be chosen, report 0.\n\nInput\n\nThe input is given from Standard Input in the following format:\nN D\r\nS_1\r\nS_2\r\n\\vdots\r\nS_N\n\nOutput\n\nPrint the maximum number of days that can be chosen, or 0 if no day can be chosen.\n\nConstraints\n\n\n- 1 \\leq N \\leq 100\n- 1 \\leq D \\leq 100\n- N and D are integers.\n- S_i is a string of length D consisting of o and x.\n\nSample Input 1\n\n3 5\r\nxooox\r\noooxx\r\noooxo\n\nSample Output 1\n\n2\r\n\nAll the people are free on the second and third days, so we can choose them.\r\nChoosing these two days will maximize the number of days among all possible choices.\n\nSample Input 2\n\n3 3\r\noxo\r\noxo\r\noxo\n\nSample Output 2\n\n1\r\n\nNote that the chosen days must be consecutive. (All the people are free on the first and third days, so we can choose either of them, but not both.)\n\nSample Input 3\n\n3 3\r\noox\r\noxo\r\nxoo\n\nSample Output 3\n\n0\r\n\nPrint 0 if no day can be chosen.\n\nSample Input 4\n\n1 7\r\nooooooo\n\nSample Output 4\n\n7\n\nSample Input 5\n\n5 15\r\noxooooooooooooo\r\noxooxooooooooox\r\noxoooooooooooox\r\noxxxooooooxooox\r\noxooooooooxooox\n\nSample Output 5\n\n5",
+  "starter_code": "",
+  "difficulty": "easy",
+  "contest_date": "2023-07-22T00:00:00",
+  "platform": "atcoder",
+  "tests": [
+   {
+    "input": "3 5\nxooox\noooxx\noooxo\n",
+    "output": "2\n",
+    "visibility": "public"
+   },
+   {
+    "input": "3 3\noxo\noxo\noxo\n",
+    "output": "1\n",
+    "visibility": "public"
+   },
+   {
+    "input": "3 3\noox\noxo\nxoo\n",
+    "output": "0\n",
+    "visibility": "public"
+   },
+   {
+    "input": "2 11\nooooooxxxxx\noooxxxxxxxo\n",
+    "output": "3\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "2 12\nxooooxoooooo\nxoooxxooooox\n",
+    "output": "5\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "2 15\nxxooxxoooxxooxx\nooooooooooooooo\n",
+    "output": "3\n",
+    "visibility": "hidden"
+   }
+  ],
+  "source_row": 55
+ },
+ {
+  "id": "livecodebench_atcoder_abc320_b",
+  "title": "Longest Palindrome",
+  "content": "You are given a string S.\r\nFind the maximum length of a contiguous substring of S that is a palindrome.\r\nNote that there is always a contiguous substring of S that is a palindrome.\n\nInput\n\nThe input is given from Standard Input in the following format:\nS\n\nOutput\n\nPrint the answer.\n\nConstraints\n\n\n- S is a string of length between 2 and 100, inclusive, consisting of uppercase English letters.\n\nSample Input 1\n\nTOYOTA\n\nSample Output 1\n\n5\r\n\nTOYOT, a contiguous substring of TOYOTA, is a palindrome of length 5.\nTOYOTA, the only length-6 contiguous substring of TOYOTA, is not a palindrome, so print 5.\n\nSample Input 2\n\nABCDEFG\n\nSample Output 2\n\n1\r\n\nEvery contiguous substring of length 1 is a palindrome.\n\nSample Input 3\n\nAAAAAAAAAA\n\nSample Output 3\n\n10",
+  "starter_code": "",
+  "difficulty": "easy",
+  "contest_date": "2023-09-16T00:00:00",
+  "platform": "atcoder",
+  "tests": [
+   {
+    "input": "TOYOTA\n",
+    "output": "5\n",
+    "visibility": "public"
+   },
+   {
+    "input": "ABCDEFG\n",
+    "output": "1\n",
+    "visibility": "public"
+   },
+   {
+    "input": "AAAAAAAAAA\n",
+    "output": "10\n",
+    "visibility": "public"
+   },
+   {
+    "input": "YJDXXCCJTGQFBFJJMUEDBHPSYSPHBDEUMJJFBFQVRTRSRFZYZGXRCCNV\n",
+    "output": "29\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "UYWZYYUZUYUUZUYUZZYYZUZZUYYZWUZUYZUYZWZUYZWYUZZZUZYZYYUYYY\n",
+    "output": "5\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "ZJKHYXMDMXYHLWGPVHNTXNMHJSJAFMYXSTCWWXEMIIPJVCHZWBJVZSTBGNGEWCCRGZL\n",
+    "output": "9\n",
+    "visibility": "hidden"
+   }
+  ],
+  "source_row": 90
+ },
+ {
+  "id": "livecodebench_atcoder_abc303_b",
+  "title": "Discord",
+  "content": "N people numbered 1,2,\\ldots,N were in M photos.  In each of the photos, they stood in a single line.  In the i-th photo, the j-th person from the left is person a_{i,j}.  \nTwo people who did not stand next to each other in any of the photos may be in a bad mood.\nHow many pairs of people may be in a bad mood?  Here, we do not distinguish a pair of person x and person y, and a pair of person y and person x.\n\nInput\n\nThe input is given from Standard Input in the following format:\nN M\r\na_{1,1} \\ldots a_{1,N}\r\n\\vdots\r\na_{M,1} \\ldots a_{M,N}\n\nOutput\n\nPrint the answer.\n\nConstraints\n\n\n- 2 \\leq N \\leq 50\n- 1 \\leq M \\leq 50\n- 1 \\leq a_{i,j} \\leq N\n- a_{i,1},\\ldots,a_{i,N} contain each of 1,\\ldots,N exactly once.\n- All values in the input are integers.\n\nSample Input 1\n\n4 2\r\n1 2 3 4\r\n4 3 1 2\n\nSample Output 1\n\n2\r\n\nThe pair of person 1 and person 4, and the pair of person 2 and person 4, may be in a bad mood.\n\nSample Input 2\n\n3 3\r\n1 2 3\r\n3 1 2\r\n1 2 3\n\nSample Output 2\n\n0\n\nSample Input 3\n\n10 10\r\n4 10 7 2 8 3 9 1 6 5\r\n3 6 2 9 1 8 10 7 4 5\r\n9 3 4 5 7 10 1 8 2 6\r\n7 3 1 8 4 9 5 6 2 10\r\n5 2 1 4 10 7 9 8 3 6\r\n5 8 1 6 9 3 2 4 7 10\r\n8 10 3 4 5 7 2 9 6 1\r\n3 10 2 7 8 5 1 4 9 6\r\n10 6 1 5 4 2 3 8 9 7\r\n4 5 9 1 8 2 7 6 3 10\n\nSample Output 3\n\n6",
+  "starter_code": "",
+  "difficulty": "easy",
+  "contest_date": "2023-05-27T00:00:00",
+  "platform": "atcoder",
+  "tests": [
+   {
+    "input": "4 2\n1 2 3 4\n4 3 1 2\n",
+    "output": "2\n",
+    "visibility": "public"
+   },
+   {
+    "input": "3 3\n1 2 3\n3 1 2\n1 2 3\n",
+    "output": "0\n",
+    "visibility": "public"
+   },
+   {
+    "input": "10 10\n4 10 7 2 8 3 9 1 6 5\n3 6 2 9 1 8 10 7 4 5\n9 3 4 5 7 10 1 8 2 6\n7 3 1 8 4 9 5 6 2 10\n5 2 1 4 10 7 9 8 3 6\n5 8 1 6 9 3 2 4 7 10\n8 10 3 4 5 7 2 9 6 1\n3 10 2 7 8 5 1 4 9 6\n10 6 1 5 4 2 3 8 9 7\n4 5 9 1 8 2 7 6 3 10\n",
+    "output": "6\n",
+    "visibility": "public"
+   },
+   {
+    "input": "2 1\n1 2\n",
+    "output": "0\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "2 1\n2 1\n",
+    "output": "0\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "2 2\n1 2\n2 1\n",
+    "output": "0\n",
+    "visibility": "hidden"
+   }
+  ],
+  "source_row": 15
+ },
+ {
+  "id": "livecodebench_atcoder_abc318_c",
+  "title": "Blue Spring",
+  "content": "Takahashi is planning an N-day train trip.\nFor each day, he can pay the regular fare or use a one-day pass.\nHere, for 1\\leq i\\leq N, the regular fare for the i-th day of the trip is F_i yen.\nOn the other hand, a batch of D one-day passes is sold for P yen. You can buy as many passes as you want, but only in units of D.\nEach purchased pass can be used on any day, and it is fine to have some leftovers at the end of the trip.\nFind the minimum possible total cost for the N-day trip, that is, the cost of purchasing one-day passes plus the total regular fare for the days not covered by one-day passes.\n\nInput\n\nThe input is given from Standard Input in the following format:\nN D P\nF_1 F_2 \\ldots F_N\n\nOutput\n\nPrint the minimum possible total cost for the N-day trip.\n\nConstraints\n\n\n- 1\\leq N\\leq 2\\times 10^5\n- 1\\leq D\\leq 2\\times 10^5\n- 1\\leq P\\leq 10^9\n- 1\\leq F_i\\leq 10^9\n- All input values are integers.\n\nSample Input 1\n\n5 2 10\n7 1 6 3 6\n\nSample Output 1\n\n20\n\nIf he buys just one batch of one-day passes and uses them for the first and third days, the total cost will be (10\\times 1)+(0+1+0+3+6)=20, which is the minimum cost needed.\nThus, print 20.\n\nSample Input 2\n\n3 1 10\n1 2 3\n\nSample Output 2\n\n6\n\nThe minimum cost is achieved by paying the regular fare for all three days.\n\nSample Input 3\n\n8 3 1000000000\n1000000000 1000000000 1000000000 1000000000 1000000000 1000000000 1000000000 1000000000\n\nSample Output 3\n\n3000000000\n\nThe minimum cost is achieved by buying three batches of one-day passes and using them for all eight days.\nNote that the answer may not fit into a 32-bit integer type.",
+  "starter_code": "",
+  "difficulty": "medium",
+  "contest_date": "2023-09-02T00:00:00",
+  "platform": "atcoder",
+  "tests": [
+   {
+    "input": "5 2 10\n7 1 6 3 6\n",
+    "output": "20\n",
+    "visibility": "public"
+   },
+   {
+    "input": "3 1 10\n1 2 3\n",
+    "output": "6\n",
+    "visibility": "public"
+   },
+   {
+    "input": "8 3 1000000000\n1000000000 1000000000 1000000000 1000000000 1000000000 1000000000 1000000000 1000000000\n",
+    "output": "3000000000\n",
+    "visibility": "public"
+   },
+   {
+    "input": "1 200000 10\n1\n",
+    "output": "1\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "1 200000 1\n1000000000\n",
+    "output": "1\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "100 10 10\n1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1\n",
+    "output": "100\n",
+    "visibility": "hidden"
+   }
+  ],
+  "source_row": 80
+ },
+ {
+  "id": "livecodebench_atcoder_abc301_e",
+  "title": "Pac",
+  "content": "We have a grid with H rows and W columns.\r\nLet (i,j) denote the square at the i-th row from the top and j-th column from the left.\r\nEach square in the grid is one of the following: the start square, the goal square, an empty square, a wall square, and a candy square.\r\n(i,j) is represented by a character A_{i,j}, and is the start square if A_{i,j}= S, the goal square if A_{i,j}= G, an empty square if A_{i,j}= ., a wall square if A_{i,j}= #, and a candy square if A_{i,j}= o.\r\nHere, it is guaranteed that there are exactly one start, exactly one goal, and at most 18 candy squares.\nTakahashi is now at the start square.\r\nHe can repeat moving to a vertically or horizontally adjacent non-wall square.\r\nHe wants to reach the goal square in at most T moves.\r\nDetermine whether it is possible.\r\nIf it is possible, find the maximum number of candy squares he can visit on the way to the goal square, where he must finish.\r\nEach candy square counts only once, even if it is visited multiple times.\n\nInput\n\nThe input is given from Standard Input in the following format:\nH W T\r\nA_{1,1}A_{1,2}\\dots A_{1,W}\r\n\\vdots\r\nA_{H,1}A_{H,2}\\dots A_{H,W}\n\nOutput\n\nIf it is impossible to reach the goal square in at most T moves, print -1.\r\nOtherwise, print the maximum number of candy squares that can be visited on the way to the goal square, where Takahashi must finish.\n\nConstraints\n\n\n- 1\\leq H,W \\leq 300\n- 1 \\leq T \\leq 2\\times 10^6\n- H, W, and T are integers.\n- A_{i,j} is one of S, G, ., #, and o.\n- Exactly one pair (i,j) satisfies A_{i,j}= S.\n- Exactly one pair (i,j) satisfies A_{i,j}= G.\n- At most 18 pairs (i,j) satisfy A_{i,j}= o.\n\nSample Input 1\n\n3 3 5\r\nS.G\r\no#o\r\n.#.\n\nSample Output 1\n\n1\r\n\nIf he makes four moves as (1,1) \\rightarrow (1,2) \\rightarrow (1,3) \\rightarrow (2,3) \\rightarrow (1,3), he can visit one candy square and finish at the goal square.\r\nHe cannot make five or fewer moves to visit two candy squares and finish at the goal square, so the answer is 1.\nNote that making five moves as (1,1) \\rightarrow (2,1) \\rightarrow (1,1) \\rightarrow (1,2) \\rightarrow (1,3) \\rightarrow (2,3) to visit two candy squares is invalid since he would not finish at the goal square.\n\nSample Input 2\n\n3 3 1\r\nS.G\r\n.#o\r\no#.\n\nSample Output 2\n\n-1\r\n\nHe cannot reach the goal square in one or fewer moves.\n\nSample Input 3\n\n5 10 2000000\r\nS.o..ooo..\r\n..o..o.o..\r\n..o..ooo..\r\n..o..o.o..\r\n..o..ooo.G\n\nSample Output 3\n\n18",
+  "starter_code": "",
+  "difficulty": "hard",
+  "contest_date": "2023-05-13T00:00:00",
+  "platform": "atcoder",
+  "tests": [
+   {
+    "input": "3 3 5\nS.G\no#o\n.#.\n",
+    "output": "1\n",
+    "visibility": "public"
+   },
+   {
+    "input": "3 3 1\nS.G\n.#o\no#.\n",
+    "output": "-1\n",
+    "visibility": "public"
+   },
+   {
+    "input": "5 10 2000000\nS.o..ooo..\n..o..o.o..\n..o..ooo..\n..o..o.o..\n..o..ooo.G\n",
+    "output": "18\n",
+    "visibility": "public"
+   },
+   {
+    "input": "1 3 1\noGS\n",
+    "output": "0\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "1 3 2000000\noGS\n",
+    "output": "1\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "1 292 121\n....o..o................................o........o................................o...........................o................o......................................o.......o............oo..o.........o.....S............o............o.....................................o..o.............o.G.\n",
+    "output": "8\n",
+    "visibility": "hidden"
+   }
+  ],
+  "source_row": 5
+ },
+ {
+  "id": "livecodebench_atcoder_abc313_a",
+  "title": "To Be Saikyo",
+  "content": "There are N people numbered 1 through N.\nEach person has a integer score called programming ability; person i's programming ability is P_i points.\nHow many more points does person 1 need, so that person 1 becomes the strongest?\nIn other words, what is the minimum non-negative integer x such that P_1 + x > P_i for all i \\neq 1?\n\nInput\n\nThe input is given from Standard Input in the following format:\nN\nP_1 P_2 \\dots P_N\n\nOutput\n\nPrint the answer as an integer.\n\nConstraints\n\n\n- 1\\leq N \\leq 100\n- 1\\leq P_i \\leq 100\n- All input values are integers.\n\nSample Input 1\n\n4\n5 15 2 10\n\nSample Output 1\n\n11\n\nPerson 1 becomes the strongest when their programming skill is 16 points or more,\nso the answer is 16-5=11.\n\nSample Input 2\n\n4\n15 5 2 10\n\nSample Output 2\n\n0\n\nPerson 1 is already the strongest, so no more programming skill is needed.\n\nSample Input 3\n\n3\n100 100 100\n\nSample Output 3\n\n1",
+  "starter_code": "",
+  "difficulty": "easy",
+  "contest_date": "2023-08-05T00:00:00",
+  "platform": "atcoder",
+  "tests": [
+   {
+    "input": "4\n5 15 2 10\n",
+    "output": "11\n",
+    "visibility": "public"
+   },
+   {
+    "input": "4\n15 5 2 10\n",
+    "output": "0\n",
+    "visibility": "public"
+   },
+   {
+    "input": "3\n100 100 100\n",
+    "output": "1\n",
+    "visibility": "public"
+   },
+   {
+    "input": "1\n60\n",
+    "output": "0\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "100\n1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1\n",
+    "output": "1\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "91\n70 2 44 42 60 5 68 10 21 49 24 40 34 3 55 10 70 12 57 65 41 7 3 14 28 18 66 45 57 58 58 58 8 46 31 21 46 15 24 69 50 39 31 49 5 39 61 11 36 40 4 34 3 41 7 68 14 15 2 42 18 64 31 7 53 8 12 16 13 61 7 16 12 23 11 20 53 63 39 54 53 21 22 70 47 45 41 37 24 41 22\n",
+    "output": "1\n",
+    "visibility": "hidden"
+   }
+  ],
+  "source_row": 65
+ },
+ {
+  "id": "livecodebench_atcoder_abc307_a",
+  "title": "Weekly Records",
+  "content": "Takahashi has recorded the number of steps he walked for N weeks. He walked A_i steps on the i-th day.\nFind the total number of steps Takahashi walked each week.\r\nMore precisely, find the sum of the steps for the first week (the 1-st through 7-th day), the sum of the steps for the second week (the 8-th through 14-th day), and so on.\n\nInput\n\nThe input is given from Standard Input in the following format:\nN\r\nA_1 A_2 \\ldots A_{7N}\n\nOutput\n\nLet B_i be the number of steps walked for the i-th week. Print B_1,B_2,\\ldots,B_N in this order, separated by spaces.\n\nConstraints\n\n\n- 1 \\leq N \\leq 10\n- 0 \\leq A_i \\leq 10^5\n- All input values are integers.\n\nSample Input 1\n\n2\r\n1000 2000 3000 4000 5000 6000 7000 2000 3000 4000 5000 6000 7000 8000\n\nSample Output 1\n\n28000 35000\r\n\nFor the first week, he walked 1000+2000+3000+4000+5000+6000+7000=28000 steps, and for the second week, he walked 2000+3000+4000+5000+6000+7000+8000=35000 steps.\n\nSample Input 2\n\n3\r\n14159 26535 89793 23846 26433 83279 50288 41971 69399 37510 58209 74944 59230 78164 6286 20899 86280 34825 34211 70679 82148\n\nSample Output 2\n\n314333 419427 335328",
+  "starter_code": "",
+  "difficulty": "easy",
+  "contest_date": "2023-06-24T00:00:00",
+  "platform": "atcoder",
+  "tests": [
+   {
+    "input": "2\n1000 2000 3000 4000 5000 6000 7000 2000 3000 4000 5000 6000 7000 8000\n",
+    "output": "28000 35000\n",
+    "visibility": "public"
+   },
+   {
+    "input": "3\n14159 26535 89793 23846 26433 83279 50288 41971 69399 37510 58209 74944 59230 78164 6286 20899 86280 34825 34211 70679 82148\n",
+    "output": "314333 419427 335328\n",
+    "visibility": "public"
+   },
+   {
+    "input": "1\n54242 34392 23333 92971 5711 47765 32760\n",
+    "output": "291174\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "3\n39721 95413 55007 11309 85980 9920 60790 77851 66816 73210 88421 93285 8471 52396 45509 32058 31791 193 9091 663 50762\n",
+    "output": "358140 460450 170067\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "10\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n",
+    "output": "0 0 0 0 0 0 0 0 0 0\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "9\n82747 99122 87999 5082 31251 66255 41799 40690 85570 59159 13281 23395 93224 13040 79181 69644 99413 83343 68928 29844 66997 71219 32142 8499 60082 25211 26320 38995 45583 95001 34569 70413 1356 2639 70352 90149 66000 31946 35825 67147 21794 97821 50228 39666 20417 54359 94698 53798 63589 24405 30194 19832 44698 59730 52322 74415 25248 88476 92495 29178 5210 99696 40133\n",
+    "output": "414255 328359 497350 262468 319913 410682 376755 305596 380436\n",
+    "visibility": "hidden"
+   }
+  ],
+  "source_row": 35
+ },
+ {
+  "id": "livecodebench_atcoder_abc310_a",
+  "title": "Order Something Else",
+  "content": "Takahashi wants a beverage called AtCoder Drink in a restaurant.\r\nIt can be ordered at a regular price of P yen.\nHe also has a discount coupon that allows him to order it at a lower price of Q yen.\r\nHowever, he must additionally order one of the restaurant's N dishes to use that coupon.\r\nFor each i = 1, 2, \\ldots, N, the price of the i-th dish is D_i yen.\nPrint the minimum total amount of money that he must pay to get the drink.\n\nInput\n\nThe input is given from Standard Input in the following format:\nN P Q\r\nD_1 D_2 \\ldots D_N\n\nOutput\n\nPrint the answer.\n\nConstraints\n\n\n- 1 \\leq N \\leq 100\n- 1 \\leq Q \\lt P \\leq 10^5\n- 1 \\leq D_i \\leq 10^5\n- All input values are integers.\n\nSample Input 1\n\n3 100 50\r\n60 20 40\n\nSample Output 1\n\n70\r\n\nIf he uses the coupon and orders the second dish, he can get the drink by paying 50 yen for it and 20 yen for the dish, for a total of 70 yen, which is the minimum total payment needed.\n\nSample Input 2\n\n3 100 50\r\n60000 20000 40000\n\nSample Output 2\n\n100\r\n\nThe total payment will be minimized by not using the coupon and paying the regular price of 100 yen.",
+  "starter_code": "",
+  "difficulty": "easy",
+  "contest_date": "2023-07-15T00:00:00",
+  "platform": "atcoder",
+  "tests": [
+   {
+    "input": "3 100 50\n60 20 40\n",
+    "output": "70\n",
+    "visibility": "public"
+   },
+   {
+    "input": "3 100 50\n60000 20000 40000\n",
+    "output": "100\n",
+    "visibility": "public"
+   },
+   {
+    "input": "1 3 1\n1\n",
+    "output": "2\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "43 91530 24892\n10711 73477 57223 97824 60118 43124 65020 40220 28688 14735 24817 68192 7235 61479 26039 24480 12944 37298 87777 32500 3035 61004 44358 21880 92654 7697 19361 92653 30390 2308 88305 44438 17477 16076 1785 23484 92015 61041 92673 77419 90445 42851 92979\n",
+    "output": "26677\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "77 74407 26563\n7706 72085 58417 35002 17769 77680 11103 59242 82356 99571 54537 62807 15273 72642 90060 32934 60569 97409 12589 12415 66234 16956 10994 68045 42756 90848 97510 1377 72725 96128 64761 64464 70733 34417 49918 72688 39922 76494 97836 8191 58414 31316 42590 34076 18284 68583 72915 88044 55646 5836 95790 17526 5178 72429 54518 7751 93816 55736 62104 42128 8918 61216 16416 63971 77268 45690 61476 29113 6296 41826 90233 93166 18892 8180 61883 92451 36859\n",
+    "output": "27940\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "83 69149 41588\n19519 2855 23999 95449 94967 26593 40057 89900 19732 92828 7733 98669 50383 92665 77342 62972 7625 14107 86950 75873 27459 77963 6627 44869 70438 74132 90030 39670 89853 61927 92354 84039 31318 7321 63363 84525 37061 36577 77364 18947 58721 80538 159 42631 22853 59399 14194 67067 13008 24202 21564 6309 95206 20651 34452 42863 53452 28439 98194 76327 84975 8351 60884 62688 798 57141 9787 44208 47308 41842 23851 12336 14159 63347 69519 34335 67460 65751 65394 33183 55336 3651 45927\n",
+    "output": "41747\n",
+    "visibility": "hidden"
+   }
+  ],
+  "source_row": 50
+ },
+ {
+  "id": "livecodebench_atcoder_abc302_b",
+  "title": "Find snuke",
+  "content": "There is a grid with H horizontal rows and W vertical columns.  Each cell has a lowercase English letter written on it.\r\nWe denote by (i, j) the cell at the i-th row from the top and j-th column from the left.\nThe letters written on the grid are represented by H strings S_1,S_2,\\ldots, S_H, each of length W.\r\nThe j-th letter of S_i represents the letter written on (i, j).\nThere is a unique set of\r\ncontiguous cells (going vertically, horizontally, or diagonally) in the grid\r\nwith s, n, u, k, and e written on them in this order.\r\nFind the positions of such cells and print them in the format specified in the Output section.\nA tuple of five cells (A_1,A_2,A_3,A_4,A_5) is said to form\r\na set of contiguous cells (going vertically, horizontally, or diagonally) with s, n, u, k, and e written on them in this order\r\nif and only if all of the following conditions are satisfied.\n\n- A_1,A_2,A_3,A_4 and A_5 have letters s, n, u, k, and e written on them, respectively.\n- For all 1\\leq i\\leq 4, cells A_i and A_{i+1} share a corner or a side.\n- The centers of A_1,A_2,A_3,A_4, and A_5 are on a common line at regular intervals.\n\nInput\n\nThe input is given from Standard Input in the following format:\nH W\r\nS_1\r\nS_2\r\n\\vdots\r\nS_H\n\nOutput\n\nPrint five lines in the following format.  \nLet (R_1,C_1), (R_2,C_2)\\ldots,(R_5,C_5) be the cells in the sought set with s, n, u, k, and e written on them, respectively.\r\nThe i-th line should contain R_i and C_i in this order, separated by a space.\nIn other words, print them in the following format:\nR_1 C_1\r\nR_2 C_2\r\n\\vdots\r\nR_5 C_5\r\n\nSee also Sample Inputs and Outputs below.\n\nConstraints\n\n\n- 5\\leq H\\leq 100\n- 5\\leq W\\leq 100\n- H and W are integers.\n- S_i is a string of length W consisting of lowercase English letters.\n- The given grid has a unique conforming set of cells.\n\nSample Input 1\n\n6 6\r\nvgxgpu\r\namkxks\r\nzhkbpp\r\nhykink\r\nesnuke\r\nzplvfj\n\nSample Output 1\n\n5 2\r\n5 3\r\n5 4\r\n5 5\r\n5 6\r\n\nTuple (A_1,A_2,A_3,A_4,A_5)=((5,2),(5,3),(5,4),(5,5),(5,6)) satisfies the conditions.\r\nIndeed, the letters written on them are s, n, u, k, and e;\r\nfor all 1\\leq i\\leq 4, cells A_i and A_{i+1} share a side;\r\nand the centers of the cells are on a common line.\n\nSample Input 2\n\n5 5\r\nezzzz\r\nzkzzz\r\nezuzs\r\nzzznz\r\nzzzzs\n\nSample Output 2\n\n5 5\r\n4 4\r\n3 3\r\n2 2\r\n1 1\r\n\nTuple (A_1,A_2,A_3,A_4,A_5)=((5,5),(4,4),(3,3),(2,2),(1,1)) satisfies the conditions.\r\nHowever, for example, (A_1,A_2,A_3,A_4,A_5)=((3,5),(4,4),(3,3),(2,2),(3,1)) violates the third condition because the centers of the cells are not on a common line, although it satisfies the first and second conditions.\n\nSample Input 3\n\n10 10\r\nkseeusenuk\r\nusesenesnn\r\nkskekeeses\r\nnesnusnkkn\r\nsnenuuenke\r\nkukknkeuss\r\nneunnennue\r\nsknuessuku\r\nnksneekknk\r\nneeeuknenk\n\nSample Output 3\n\n9 3\r\n8 3\r\n7 3\r\n6 3\r\n5 3",
+  "starter_code": "",
+  "difficulty": "medium",
+  "contest_date": "2023-05-20T00:00:00",
+  "platform": "atcoder",
+  "tests": [
+   {
+    "input": "6 6\nvgxgpu\namkxks\nzhkbpp\nhykink\nesnuke\nzplvfj\n",
+    "output": "5 2\n5 3\n5 4\n5 5\n5 6\n",
+    "visibility": "public"
+   },
+   {
+    "input": "5 5\nezzzz\nzkzzz\nezuzs\nzzznz\nzzzzs\n",
+    "output": "5 5\n4 4\n3 3\n2 2\n1 1\n",
+    "visibility": "public"
+   },
+   {
+    "input": "10 10\nkseeusenuk\nusesenesnn\nkskekeeses\nnesnusnkkn\nsnenuuenke\nkukknkeuss\nneunnennue\nsknuessuku\nnksneekknk\nneeeuknenk\n",
+    "output": "9 3\n8 3\n7 3\n6 3\n5 3\n",
+    "visibility": "public"
+   },
+   {
+    "input": "5 5\nsunne\nunsuk\nuunse\nusnsu\nekuns\n",
+    "output": "5 5\n5 4\n5 3\n5 2\n5 1\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "5 95\nusknnsksussueuksuknukunsukneessneneeeuenkneeuksessusuesunnukknsnknsukuskeeskkuenseenkknnkeneuks\nuuknenkensksknkkusnnunnennskeueunsskekuuuueeknnekkesenunnkeeneuknksenukuuesekkeeeeunsueununsuee\nnsnensnkssnuksuknseeenseensnessunkseunsesnknukuneknsskueseukeeeskkeskeeneknusknesesnekuueeuesss\neeekknnssuuuseskenkunusssknsskssuukssuekeknkssssensunueeeeukenkskuksuuuueueesnskseskksuuuusuksu\nukukueksesksssnnneekksnnnnkenussunenneueuneeknskuskusuusneneunnusseuuseunkuukssnkennseskusknueu\n",
+    "output": "1 47\n2 46\n3 45\n4 44\n5 43\n",
+    "visibility": "hidden"
+   },
+   {
+    "input": "5 96\nxuvadgecswqwluhzzrslmzbkwyaslguyahbempkuxmvmwapyryjcoeptvifwxjlfnnffnjhekfupytmvcvwtbzaqvsdbbhwu\noyiqaekunsqkrxaumhqqyjwxtlnmzqhfcgqiseezekrscopbsucurufwhjgvkxtftfkjwvusxtgjzogciqzvjvnfpkearbeq\njmcssqmfzhnhewqrqrfpgnbwjagmwsrhuvluummbaxfxgmmigeceibtpufmxxwxhextmhzazzejrggkwrgfnitlfhehjpnit\ncjohxxslboylstgknzzatnycudotemvwhtlghwshycavmejynpsqpenddrmefybzbdjlirfezmvzcrvaosxchhjqtzgwntkc\nbosnwbdbnqxdewtcqlrvqwytfubogsmpffeipjfbmdpieaekzzuiffcszjwsktlxzwoyqjgfciaynvsiqusonehtbxzoveaq\n",
+    "output": "2 10\n2 9\n2 8\n2 7\n2 6\n",
+    "visibility": "hidden"
+   }
+  ],
+  "source_row": 10
+ }
+]

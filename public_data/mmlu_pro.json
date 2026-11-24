@@ -1,0 +1,762 @@
+[
+ {
+  "id": "mmlu_pro_7688",
+  "question": "Statement 1 | R is a splitting field of some polynomial over Q. Statement 2 | There is a field with 60 elements.",
+  "choices": [
+   "Statement 1 is True, Statement 2 is Not Given",
+   "Statement 1 is Not Given, Statement 2 is False",
+   "True, False",
+   "Both Statements are True and False respectively",
+   "True, True",
+   "Statement 1 is Not Given, Statement 2 is True",
+   "False, True",
+   "False, False",
+   "Statement 1 is False, Statement 2 is Not Given",
+   "Both statements are Not Given"
+  ],
+  "answer": "H",
+  "category": "math",
+  "source_row": 7505
+ },
+ {
+  "id": "mmlu_pro_7689",
+  "question": "Statement 1 | Any set of two vectors in R^2 is linearly independent. Statement 2 | If V = span(v1, ... , vk) and {v1, ... , vk} are linearly independent, then dim(V) = k.",
+  "choices": [
+   "False, False",
+   "True, False",
+   "False, True",
+   "Cannot determine, False",
+   "True, True",
+   "Cannot determine, Cannot determine",
+   "False, Cannot determine",
+   "True, Cannot determine",
+   "Cannot determine, True",
+   "False, False, but there are exceptions"
+  ],
+  "answer": "C",
+  "category": "math",
+  "source_row": 7506
+ },
+ {
+  "id": "mmlu_pro_7690",
+  "question": "Statement 1 | Every permutation is a cycle. Statement 2 | Every cycle is a permutation.",
+  "choices": [
+   "Not enough information, False",
+   "False, False",
+   "Not enough information, True",
+   "True, True",
+   "True, False",
+   "True, Not enough information",
+   "Not enough information, Not enough information",
+   "False, True",
+   "False, Not enough information",
+   "Both statements are partially true"
+  ],
+  "answer": "H",
+  "category": "math",
+  "source_row": 7507
+ },
+ {
+  "id": "mmlu_pro_6003",
+  "question": "Who discovered the first virus?",
+  "choices": [
+   "The microscopist Antonie van Leeuwenhoek",
+   "The virologist Jonas Salk",
+   "The physician Edward Jenner",
+   "The microbiologist Louis Pasteur",
+   "The bacteriologist Charles Chamberland",
+   "The biologist Robert Hooke",
+   "The biologist Gregor Mendel",
+   "The geneticist James Watson",
+   "The botanist Dmitri Iwanowsky",
+   "The physicist Albert Einstein"
+  ],
+  "answer": "I",
+  "category": "health",
+  "source_row": 5844
+ },
+ {
+  "id": "mmlu_pro_6004",
+  "question": "Poliovirus can most easily become more virulent by which of the following processes?",
+  "choices": [
+   "Altering its mode of transmission",
+   "Increasing its replication speed",
+   "Recombining with another enterovirus",
+   "Multiple nucleotide deletions and substitutions",
+   "Developing resistance to antiviral medications",
+   "Mutation of the RNA genome at only a few positions",
+   "Developing a secondary protein coat",
+   "Increasing the complexity of its RNA genome",
+   "Altering its protein coat",
+   "Merging with a bacteriophage"
+  ],
+  "answer": "F",
+  "category": "health",
+  "source_row": 5845
+ },
+ {
+  "id": "mmlu_pro_6005",
+  "question": "How do viruses of the calcivirus family replicate?",
+  "choices": [
+   "By integrating their DNA into the host cell's genome",
+   "As negative strand RNA viruses",
+   "Via DNA replication",
+   "As positive strand RNA viruses",
+   "Using genetic reassortment",
+   "Through binary fission",
+   "As single-stranded DNA viruses",
+   "Retroviruses",
+   "As double-stranded RNA viruses",
+   "Through a process called transduction"
+  ],
+  "answer": "D",
+  "category": "health",
+  "source_row": 5846
+ },
+ {
+  "id": "mmlu_pro_9045",
+  "question": "We were first able to accurately measure the diameter of Pluto from:",
+  "choices": [
+   "Lunar-based observations made during NASA's Apollo missions",
+   "The Voyager 2 spacecraft flyby in the 1980s",
+   "Observations made by the Chandra X-ray Observatory",
+   "brightness measurements made during mutual eclipses of Pluto and Charon",
+   "The Mars Rover's telescope observations of Pluto",
+   "radar observations made by the Arecibo telescope",
+   "Observations made by the Spitzer Space Telescope",
+   "Hubble Space Telescope images that resolved Pluto's disk",
+   "a New Horizons flyby in the 1990s",
+   "Images captured by the Kepler Space Telescope"
+  ],
+  "answer": "D",
+  "category": "physics",
+  "source_row": 8856
+ },
+ {
+  "id": "mmlu_pro_9047",
+  "question": "Approximately how far away is the Andromeda Galaxy?",
+  "choices": [
+   "5 million light years",
+   "2.5 million light years",
+   "2.1 million light years",
+   "1.9 million light years",
+   "3.2 million light years",
+   "4 million light years",
+   "1.7 million light years",
+   "3.5 million light years",
+   "1.2 million light years",
+   "2.8 million light years"
+  ],
+  "answer": "B",
+  "category": "physics",
+  "source_row": 8858
+ },
+ {
+  "id": "mmlu_pro_9048",
+  "question": "What is the source of the material that causes meteor showers?",
+  "choices": [
+   "Large meteorites disintegrate in the Earth's atmosphere, creating smaller particles that cause a meteor shower.",
+   "Near-Earth asteroids gradually disintegrate and spread out along their orbital paths. When the Earth passes through the orbit of an asteroid we are bombarded by sand-sized particles that cause a meteor shower.",
+   "Asteroid impacts elsewhere in the solar system throw sand-sized particles into space and occasionally the Earth passes through a cloud of these particles which burn up in our atmosphere and cause a meteor shower.",
+   "Meteor showers are caused by the Earth passing through a cloud of dust and debris left behind by the disintegration of planets in our solar system.",
+   "The gravitational pull of the moon causes rocks on its surface to be ejected into space. These rocks then enter Earth's atmosphere and cause a meteor shower.",
+   "Meteor showers are caused by the Earth passing through the tail of a comet, where dust and ice particles are left behind.",
+   "Meteor showers are caused by the Earth passing through a cloud of dust and debris left behind by the disintegration of distant stars.",
+   "Near-Earth asteroids disintegrate as they enter Earth's atmosphere creating hundreds of bright meteors that appear to radiate from a single location in the sky.",
+   "Meteor showers are caused by the disintegration of satellites and space debris as they re-enter the Earth's atmosphere.",
+   "The nuclei of comets gradually disintegrate and spread out along their orbital paths. When the Earth passes through the orbit of an comet we are bombarded by sand-sized particles that cause a meteor shower."
+  ],
+  "answer": "J",
+  "category": "physics",
+  "source_row": 8859
+ },
+ {
+  "id": "mmlu_pro_71",
+  "question": "Managers are entrusted to run the company in the best interest of ________. Specifically, they have a duty to act for the benefit of the company, as well as a duty of ________ and of _______.",
+  "choices": [
+   "Shareholders, Diligence, Self-interest",
+   "Shareholders, Self-interest, Care and Skill",
+   "Stakeholders, Care and skill, Self-interest",
+   "Stakeholders, Diligence, Care and Skill",
+   "Customers, Care and Skill, Diligence",
+   "Shareholders, Care and Skill, Diligence",
+   "Shareholders, Self-interest, Diligence",
+   "Employees, Care and Skill, Diligence",
+   "Stakeholders, Self-interest, Diligence",
+   "Stakeholder, Care and Skill, Diligence"
+  ],
+  "answer": "F",
+  "category": "business",
+  "source_row": 1
+ },
+ {
+  "id": "mmlu_pro_72",
+  "question": "There are two main issues associated with _____ sizing. _______ is a key issue as due to the information policy of the corporation it can be argued that employees have a right to know if they are being made redundant. _______ is a second issue, particularly the ________ package that employees receive when laid off.",
+  "choices": [
+   "Down, Autonomy, Remuneration, Benefit",
+   "Down, Involvement, Independence, Benefit",
+   "Up, Independence, Involvement, Benefit",
+   "Down, Privacy, Autonomy, Benefit",
+   "Up, Involvement, Autonomy, Compensation",
+   "Down, Independence, Autonomy, Compensation",
+   "Up, Involvement, Remuneration, Severance",
+   "Up, Privacy, Remuneration, Severance",
+   "Up, Autonomy, Remuneration, Compensation",
+   "Down, Involvement, Remuneration, Compensation"
+  ],
+  "answer": "J",
+  "category": "business",
+  "source_row": 2
+ },
+ {
+  "id": "mmlu_pro_73",
+  "question": "_______ locate morality beyond the sphere of rationality in an emotional 'moral impulse' towards others.",
+  "choices": [
+   "Ethical egoism",
+   "Ethics of duty",
+   "Postmodern ethics",
+   "Consequentialist ethics",
+   "Utilitarian ethics",
+   "Deontological ethics",
+   "Virtue ethics",
+   "Ethics of care",
+   "Ethics of rights",
+   "Relativist ethics"
+  ],
+  "answer": "C",
+  "category": "business",
+  "source_row": 3
+ },
+ {
+  "id": "mmlu_pro_2805",
+  "question": "The light reactions of photosynthesis supply the Calvin cycle with which of the following?",
+  "choices": [
+   "CO2 released by the light-dependent reactions provides the raw material for the Calvin cycle.",
+   "The light reactions provide oxygen for the light-independent reactions.",
+   "Water entering the plant through the roots provides hydrogen directly to the Calvin cycle.",
+   "ATP and NADPH provide the power and raw materials for the Calvin cycle.",
+   "The light reactions provide nitrogen to the Calvin cycle for protein synthesis.",
+   "Glucose and fructose are supplied to the Calvin cycle by the light reactions.",
+   "The light reactions supply the Calvin cycle with sunlight directly.",
+   "ATP and NADPH are broken down in the light reactions to supply the Calvin cycle with energy.",
+   "The light reactions provide carbon dioxide for the light-independent reactions.",
+   "The light reactions supply the Calvin cycle with water and oxygen."
+  ],
+  "answer": "D",
+  "category": "biology",
+  "source_row": 2689
+ },
+ {
+  "id": "mmlu_pro_2807",
+  "question": "In reference to a segment of DNA, which of the following molecules contains the fewest number of nucleotides?",
+  "choices": [
+   "the tRNA transcript from the original DNA",
+   "a single strand of the original DNA segment after a substitution mutation",
+   "the final processed mRNA made from the original DNA",
+   "the primary RNA transcript (after splicing) from the original DNA",
+   "a single strand of the original DNA segment after a duplication mutation",
+   "the primary RNA transcript (before splicing) from the original DNA",
+   "a single strand of the original DNA segment after a deletion mutation",
+   "a single strand of the original DNA segment",
+   "a single strand of complementary DNA (cDNA) made from the original DNA",
+   "a single strand of the original DNA segment after a point mutation"
+  ],
+  "answer": "I",
+  "category": "biology",
+  "source_row": 2691
+ },
+ {
+  "id": "mmlu_pro_2808",
+  "question": "Which group is composed entirely of individuals who maintained that species are fixed (i.e., unchanging)?",
+  "choices": [
+   "Aristotle, Darwin, and Lamarck",
+   "Aristotle, Lyell, and Darwin",
+   "Aristotle, Linnaeus, and Cuvier",
+   "Aristotle, Cuvier, and Lamarck",
+   "Linnaeus, Darwin, and Lamarck",
+   "Linnaeus, Cuvier, and Lamarck",
+   "Darwin, Cuvier, and Lamarck",
+   "Lyell, Cuvier, and Darwin",
+   "Lyell, Linnaeus, and Lamarck",
+   "Lyell, Lamarck, and Darwin"
+  ],
+  "answer": "C",
+  "category": "biology",
+  "source_row": 2692
+ },
+ {
+  "id": "mmlu_pro_3526",
+  "question": "An unknown substance is found to have a high melting point. In addition, it is a poor conductor of electricity and does not dissolve in water. The substance most likely contains",
+  "choices": [
+   "dipole-dipole bonding",
+   "ionic bonding",
+   "covalent network bonding",
+   "nonpolar covalent bonding",
+   "coordinate covalent bonding",
+   "London dispersion bonding",
+   "van der Waals bonding",
+   "metallic bonding",
+   "hydrogen bonding",
+   "polar covalent bonding"
+  ],
+  "answer": "C",
+  "category": "chemistry",
+  "source_row": 3405
+ },
+ {
+  "id": "mmlu_pro_3528",
+  "question": "How many milliliters of 0.250 M KOH does it take to neutralize completely 50.0 mL of 0.150 M H3PO4?",
+  "choices": [
+   "75.0 mL",
+   "90.0 mL",
+   "60.0 mL",
+   "120 mL",
+   "30.0 mL",
+   "180 mL",
+   "270 mL",
+   "100 mL",
+   "27 mL",
+   "150 mL"
+  ],
+  "answer": "B",
+  "category": "chemistry",
+  "source_row": 3407
+ },
+ {
+  "id": "mmlu_pro_3529",
+  "question": "Consider the Lewis structures for the following molecules: CO2, CO32-, NO2-, and NO3-. Which molecule or molecules exhibit sp2 hybridization around the central atom?",
+  "choices": [
+   "NO2- only",
+   "CO2 and CO32-",
+   "CO2 only",
+   "CO2 and NO3-",
+   "NO2- and NO3-",
+   "CO32- and NO3-",
+   "NO3- only",
+   "CO2 and NO2-",
+   "CO32- only",
+   "CO32-, NO2- and NO3-"
+  ],
+  "answer": "J",
+  "category": "chemistry",
+  "source_row": 3408
+ },
+ {
+  "id": "mmlu_pro_10357",
+  "question": "In the program below, y is a positive integer (e.g. l, 2, 3, ...).\n result ← 0\n REPEAT 3 TIMES {\n REPEAT y TIMES {\n result ← result + 1\n }\n }",
+  "choices": [
+   "3y",
+   "3/y",
+   "y+2",
+   "3^y",
+   "2y",
+   "y+3",
+   "y^2",
+   "y-3",
+   "y^3",
+   "9y"
+  ],
+  "answer": "A",
+  "category": "computer science",
+  "source_row": 10155
+ },
+ {
+  "id": "mmlu_pro_10358",
+  "question": "Which of the following has the greatest potential for compromising a user's personal privacy?",
+  "choices": [
+   "A group of cookies stored by the user's Web browser",
+   "The Wi-Fi network the user is connected to",
+   "The user's search engine history",
+   "The Internet Protocol (IP) address of the user's computer",
+   "The operating system of the user's computer",
+   "The user's public key used for encryption",
+   "The brand of the user's computer",
+   "The user's phone number",
+   "The user's e-mail address",
+   "The user's social media username"
+  ],
+  "answer": "A",
+  "category": "computer science",
+  "source_row": 10156
+ },
+ {
+  "id": "mmlu_pro_10360",
+  "question": "Two expressions E and F are said to be unifiable if there are substitutions for the variables of E and F that make the expressions lexically identical. In the following three expressions, only w, x, y, and z are variables.\nI. f(w,w)\nII. f(x,1)\nIII. f(y,g(z))\nWhich pairs of these expressions is (are) pairs of unifiable expressions?",
+  "choices": [
+   "(I, III) and (II, III) only",
+   "(II, III) only",
+   "(I, II) and (I, III) only",
+   "(I, II) only",
+   "Only single expressions are unifiable, not pairs",
+   "None of the pairs are unifiable",
+   "(I, II), (I, III), and (II, III)",
+   "All three expressions are unifiable",
+   "(I, II) and (II, III) only",
+   "(I, III) only"
+  ],
+  "answer": "C",
+  "category": "computer science",
+  "source_row": 10158
+ },
+ {
+  "id": "mmlu_pro_6827",
+  "question": "The aggregate demand curve is",
+  "choices": [
+   "not found by adding product demand curves horizontally or vertically",
+   "a vertical summation of market demand curves",
+   "found by adding product demand curves both horizontally and vertically",
+   "a horizontal subtraction of firm demand curves",
+   "a simple aggregation of demand curves for individual goods",
+   "a vertical subtraction of market demand curves",
+   "a simple aggregation of supply curves for individual goods",
+   "a horizontal summation of firm demand curves",
+   "a horizontal summation of market demand curves",
+   "a vertical summation of firm demand curves"
+  ],
+  "answer": "A",
+  "category": "economics",
+  "source_row": 6661
+ },
+ {
+  "id": "mmlu_pro_6828",
+  "question": "Which of the following is a tool used by the Fed to increase the money supply?",
+  "choices": [
+   "Decreasing government spending.",
+   "A lower discount rate.",
+   "A higher corporate tax rate.",
+   "Selling foreign exchange reserves.",
+   "Selling Treasury securities to commercial banks.",
+   "Decreasing the minimum wage.",
+   "Selling government bonds to the public.",
+   "Increasing interest rates.",
+   "A lower personal income tax rate.",
+   "A higher reserve ratio."
+  ],
+  "answer": "B",
+  "category": "economics",
+  "source_row": 6662
+ },
+ {
+  "id": "mmlu_pro_6829",
+  "question": "If the world price of copper exceeds the domestic (U.S.) price of copper we would expect",
+  "choices": [
+   "the demand for U.S. copper to fall.",
+   "the United States to impose a tariff on imported copper to protect domestic producers.",
+   "the United States to subsidize domestic copper producers.",
+   "the United States to import more copper.",
+   "a decrease in the U.S. production of copper.",
+   "the demand for imported copper in the U.S. to fall.",
+   "a growing trade deficit in the United States in goods and services.",
+   "the domestic price of copper to increase.",
+   "the United States to be a net exporter of copper.",
+   "the United States to impose quotas on copper exports."
+  ],
+  "answer": "I",
+  "category": "economics",
+  "source_row": 6663
+ },
+ {
+  "id": "mmlu_pro_11285",
+  "question": "What will be the number of lamps, each having 300 lumens, required to obtain an average illuminance of 50 lux on a 4m * 3m rectangular room?",
+  "choices": [
+   "6",
+   "1",
+   "2",
+   "5",
+   "7",
+   "3",
+   "9",
+   "10",
+   "8",
+   "4"
+  ],
+  "answer": "C",
+  "category": "engineering",
+  "source_row": 11063
+ },
+ {
+  "id": "mmlu_pro_11288",
+  "question": "Power dissipation in ideal inductor is",
+  "choices": [
+   "Negative",
+   "Maximum",
+   "Infinite",
+   "Minimum",
+   "Half of the total power",
+   "Dependent on the resistance",
+   "A finite value",
+   "Zero",
+   "Twice the total power",
+   "Equal to the power of the source"
+  ],
+  "answer": "H",
+  "category": "engineering",
+  "source_row": 11066
+ },
+ {
+  "id": "mmlu_pro_11289",
+  "question": "In force-current analogy, electrical analogous quantity for displacement (x) is",
+  "choices": [
+   "inductance.",
+   "resistance.",
+   "impedance.",
+   "voltage.",
+   "capacitance.",
+   "electromagnetic field.",
+   "charge.",
+   "power.",
+   "flux.",
+   "current."
+  ],
+  "answer": "G",
+  "category": "engineering",
+  "source_row": 11067
+ },
+ {
+  "id": "mmlu_pro_10774",
+  "question": "Select the best translation into predicate logic. David teaches Chris. (c: Chris; d: David; Txy: x teaches y)",
+  "choices": [
+   "Tdc",
+   "Tcc",
+   "cTd",
+   "cTc",
+   "dTdc",
+   "dTc",
+   "Tcd",
+   "Tdd",
+   "dTcd",
+   "cTdd"
+  ],
+  "answer": "A",
+  "category": "philosophy",
+  "source_row": 10564
+ },
+ {
+  "id": "mmlu_pro_10775",
+  "question": " Construct a complete truth table for the following pairs of propositions. Then, using the truth tables, determine whether the statements are logically equivalent or contradictory. If neither, determine whether they are consistent or inconsistent. Justify your answers.\n(~M ⊃ ~N) ∨ (O ≡ N) and (~M · N) · [(~O ∨ ~N) · (O ∨ N)]",
+  "choices": [
+   "Both logically equivalent and consistent",
+   "Both consistent and contradictory",
+   "Both logically equivalent and contradictory",
+   "Contradictory",
+   "Neither logically equivalent nor contradictory, but inconsistent",
+   "Logically equivalent",
+   "Both inconsistent and contradictory",
+   "Inconsistent",
+   "Neither logically equivalent nor contradictory, but consistent",
+   "Neither logically equivalent nor inconsistent, but contradictory"
+  ],
+  "answer": "D",
+  "category": "philosophy",
+  "source_row": 10565
+ },
+ {
+  "id": "mmlu_pro_10776",
+  "question": " Which of the following propositions is an immediate (one-step) consequence in PL of the given premises?\nU ⊃ W\nW ⊃ (X ≡ ~Y)\n(X ≡ ~Y) ⊃ Z\n~Z",
+  "choices": [
+   "~W ∨ Z",
+   "U ⊃ Z",
+   "~W",
+   "~U",
+   "U ∨ W",
+   "~(U ⊃ W)",
+   "Z ∨ W",
+   "~Z ⊃ W",
+   "~(X ≡ ~Y)",
+   "(X ≡ ~Y) ∨ Z"
+  ],
+  "answer": "I",
+  "category": "philosophy",
+  "source_row": 10566
+ },
+ {
+  "id": "mmlu_pro_5059",
+  "question": "What was the significance of the Gulf of Tonkin resolution?",
+  "choices": [
+   "It triggered a global protest against US involvement in Vietnam",
+   "It resulted in a significant reduction of US troops in Vietnam",
+   "It allowed the US to intensify its involvement in Vietnam",
+   "It illustrated the influence of public opinion on US foreign policy",
+   "It marked the beginning of diplomatic negotiations with Vietnam",
+   "It enhanced Congressional control over the Vietnam War",
+   "It curtailed US involvement in Vietnam",
+   "It established the neutrality of the United States in the Vietnam War",
+   "It isolated the US from its allies during the Vietnam War",
+   "It led to the immediate end of the Vietnam War"
+  ],
+  "answer": "C",
+  "category": "other",
+  "source_row": 4918
+ },
+ {
+  "id": "mmlu_pro_5060",
+  "question": "Which statement is true about focus group research?",
+  "choices": [
+   "The participants should be selected at random.",
+   "The information can be generalized to describe a larger population.",
+   "The findings generate qualitative data that can be used to develop surveys.",
+   "It is an example of a formal research tool for practitioners.",
+   "The information collected cannot be used in decision making.",
+   "It is exclusively used for market research.",
+   "All participants in the focus group should have similar backgrounds and experiences.",
+   "It is the most efficient way to gather quantitative data.",
+   "The facilitator's role is to observe, not guide the discussion.",
+   "The group must consist of at least 20 participants for valid results."
+  ],
+  "answer": "C",
+  "category": "other",
+  "source_row": 4919
+ },
+ {
+  "id": "mmlu_pro_5063",
+  "question": "You seek the counsel of one of your peers who designed and implemented a communication program that resulted in the successful permitting of an automotive recycling center, despite strong opposition from community organizations. You have to design a program to win approval for a similar project proposed by your company. Your peer gives you a brief piece of advice that succinctly describes the foundation of his successful program. What is most likely your peer's advice for a successful communication program?",
+  "choices": [
+   "Kill them with kindness",
+   "Ignore their concerns",
+   "Expose them to ridicule",
+   "Bribe them into agreement",
+   "Use aggressive tactics",
+   "Solve their problems",
+   "Manipulate their emotions",
+   "Overwhelm them with facts",
+   "Overpower them with authority",
+   "Intimidate them with legal jargon"
+  ],
+  "answer": "F",
+  "category": "other",
+  "source_row": 4922
+ },
+ {
+  "id": "mmlu_pro_1988",
+  "question": "During the second stage of Kohlberg’s preconventional level of moral development, children obey rules because:",
+  "choices": [
+   "they are taught that rules are unbreakable.",
+   "they enjoy following the rules.",
+   "they are rewarded for following rules.",
+   "they feel they have a personal duty to uphold rules and laws.",
+   "doing so helps them satisfy their personal needs.",
+   "they understand the concept of fairness and justice.",
+   "doing so helps them avoid punishment.",
+   "\"\"\"everyone else is doing it.\"\"\"",
+   "they believe in the inherent goodness of rules.",
+   "they fear societal disapproval."
+  ],
+  "answer": "E",
+  "category": "psychology",
+  "source_row": 1892
+ },
+ {
+  "id": "mmlu_pro_1990",
+  "question": "Which of the following item difficulty (p) levels maximizes the differentiation of examinees into high- and low-performing groups:",
+  "choices": [
+   "0",
+   "0.5",
+   "0.8",
+   "0.3",
+   "1.2",
+   "0.2",
+   "0.9",
+   "1.0",
+   "0.7",
+   "1.5"
+  ],
+  "answer": "B",
+  "category": "psychology",
+  "source_row": 1894
+ },
+ {
+  "id": "mmlu_pro_1993",
+  "question": "The following measure of general cognitive abilities would be most appropriate for use with a nonverbal adolescent:",
+  "choices": [
+   "Wechsler Intelligence Scale for Children–IV",
+   "Kaufman Assessment Battery for Children–II",
+   "Cognitive Assessment System–II",
+   "Woodcock-Johnson IV Tests of Cognitive Abilities",
+   "Differential Ability Scales–II",
+   "Wechsler Preschool and Primary Scale of Intelligence–IV",
+   "Ravens Progressive Matrices",
+   "Stanford-Binet Intelligence Scales–5",
+   "Wechsler Adult Intelligence Scale–IV",
+   "Leiter–R"
+  ],
+  "answer": "J",
+  "category": "psychology",
+  "source_row": 1897
+ },
+ {
+  "id": "mmlu_pro_4670",
+  "question": "The most obvious material symbols of ancient state societies are:",
+  "choices": [
+   "pottery fragments.",
+   "irrigation canals.",
+   "jewelry artifacts.",
+   "monumental works.",
+   "pyramids.",
+   "hieroglyphics.",
+   "agricultural tools.",
+   "ancient weaponry.",
+   "cave paintings.",
+   "stone tablets."
+  ],
+  "answer": "D",
+  "category": "history",
+  "source_row": 4538
+ },
+ {
+  "id": "mmlu_pro_4671",
+  "question": "The ancient city of Cahokia contained more than _______ and a population of around _______.",
+  "choices": [
+   "40 residential complexes; 40,000",
+   "50 religious monuments; 5,000",
+   "120 earthen mounds; 10,000",
+   "70 public squares; 7,000",
+   "80 ceremonial mounds; 50,000",
+   "200 pyramidal mounds; 200,000",
+   "60 burial mounds; 2,000",
+   "30 agricultural terraces; 30,000",
+   "150 defensive walls; 15,000",
+   "100 trading posts; 1,000"
+  ],
+  "answer": "C",
+  "category": "history",
+  "source_row": 4539
+ },
+ {
+  "id": "mmlu_pro_866",
+  "question": "A woman was standing in the aisle of a subway car and put her purse on the seat next to her. A man approached the woman from behind and grabbed the purse off the seat. He then pushed the woman out of the way and ran out of the subway car while carrying the purse. The man was apprehended on the subway platform while in possession of the purse. In a jurisdiction that follows the common law with respect to criminal offenses, of what crime can the man properly be convicted?",
+  "choices": [
+   "Fraud, because he took the purse without the woman's consent.",
+   "Larceny, because he took the purse without the woman's permission.",
+   "Burglary, because he entered the subway car with the intention of committing a theft.",
+   "Robbery, because he used force in leaving with the purse.",
+   "Robbery, because he used force to take possession of the purse.",
+   "Robbery, because he used force to remove the woman from the purse's vicinity.",
+   "Larceny, because force was not used until after he took the purse.",
+   "Assault, because he pushed the woman out of the way.",
+   "Larceny, because he made no threat to use force.",
+   "Robbery, because he physically took the purse from the woman's presence."
+  ],
+  "answer": "D",
+  "category": "law",
+  "source_row": 789
+ },
+ {
+  "id": "mmlu_pro_867",
+  "question": "A federal grand jury was investigating a corporation whose tanker ship had spilled crude oil into environmentally sensitive waters. The grand jury issued a subpoena requiring the corporation to produce all emails and internal documents regarding the corporation's knowledge of the risks of an oil spill. The corporation has objected, citing its Fifth Amendment privilege against self-incrimination. Can the subpoena be enforced?",
+  "choices": [
+   "Yes, because the Fifth Amendment privilege only applies to personal testimonies.",
+   "Yes, because a corporation has no Fifth Amendment privilege.",
+   "No, because the corporation was not granted use-and-derivative-use immunity.",
+   "No, because the corporation was not granted transactional immunity.",
+   "Yes, because the Fifth Amendment privilege does not apply to the compelled production of documents.",
+   "No, because the documents are protected under attorney-client privilege.",
+   "No, because a corporation has the same Fifth Amendment rights as an individual.",
+   "No, because the subpoena violates the corporation's Fourth Amendment rights.",
+   "Yes, because the documents are not self-incriminating.",
+   "Yes, because the subpoena is part of a lawful investigation."
+  ],
+  "answer": "B",
+  "category": "law",
+  "source_row": 790
+ }
+]

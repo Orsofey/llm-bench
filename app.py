@@ -5,26 +5,30 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
-import batch
-import local
 import bench
 import verify
+import public_bench
 
-ROOT = Path(__file__).parent
-RESULTS = ROOT / "results"
+ROOT = Path(os.environ.get("LLM_BENCH_ROOT", str(Path(__file__).parent))).resolve()
+PLATFORM = os.environ.get("LLM_BENCH_PLATFORM", "desktop")
+if os.environ.get("LLM_BENCH_DATA_DIR"):
+    DATA_DIR = Path(os.environ["LLM_BENCH_DATA_DIR"]).expanduser().resolve()
+elif getattr(sys, "frozen", False) and os.name == "nt":
+    DATA_DIR = Path(os.environ.get("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))) / "Orsofey" / "LLM Bench"
+else:
+    DATA_DIR = ROOT
+RESULTS = DATA_DIR / "results"
 PORT = int(os.environ.get("LLM_BENCH_PORT", 8787))
-_WATCH = [Path(__file__).parent / n for n in ("bench.py", "verify.py", "app.py", "batch.py", "local.py", "public.py")]
-_STARTED = {str(f): f.stat().st_mtime for f in _WATCH if f.exists()}
 RUNS = {}  # id -> {"events": [], "status": "running|done|error", "cancel": Event}
 
 
 def env_info():
-    return {"claude_cli": bool(shutil.which("claude")), "codex_cli": bool(shutil.which("codex")),
+    return {"claude_cli": PLATFORM != "android" and bool(shutil.which("claude")),
+            "codex_cli": PLATFORM != "android" and bool(shutil.which("codex")),
             "ffmpeg": bool(bench.FFMPEG and bench.FFPROBE),
             "categories": sorted({t["cat"] for t in bench.TASKS} | {"context"}),
-            "tiktoken": bool(verify.builtin_refs()),
-            # код обновили (git pull), а сервер работает на старом — нужен перезапуск
-            "stale": any(f.exists() and f.stat().st_mtime != _STARTED.get(str(f)) for f in _WATCH)}
+            "tiktoken": bool(verify.builtin_refs()), "platform": PLATFORM,
+            "supports_cli": PLATFORM != "android", "version": "1.0.0"}
 
 
 def check_key(cfg):
@@ -52,7 +56,7 @@ def check_key(cfg):
     return res
 
 
-def start_run(cfg, job="run"):
+def start_run(cfg):
     rid = uuid.uuid4().hex[:8]
     run = {"events": [], "status": "running", "cancel": threading.Event()}
     RUNS[rid] = run
@@ -63,10 +67,7 @@ def start_run(cfg, job="run"):
 
     def worker():
         try:
-            if job == "batch":
-                fn = batch.run_batch(cfg, RESULTS, emit, run["cancel"])
-            else:
-                fn = bench.run_benchmark({**cfg, "out": str(RESULTS)}, emit, run["cancel"])
+            fn = bench.run_benchmark({**cfg, "out": str(RESULTS)}, emit, run["cancel"])
             run["status"] = "done" if fn else "error"
         except Exception as e:
             emit({"type": "error", "message": str(e)[:400]})
@@ -111,6 +112,8 @@ class H(BaseHTTPRequestHandler):
             self.send_response(code)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(b)))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
             self.end_headers()
             self.wfile.write(b)
         except (BrokenPipeError, ConnectionResetError):
@@ -130,6 +133,9 @@ class H(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(b)))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
             self.end_headers()
             self.wfile.write(b)
         elif u.path == "/api/env":
@@ -142,19 +148,11 @@ class H(BaseHTTPRequestHandler):
             self._json({"status": run["status"], "events": run["events"][since:], "next": len(run["events"])})
         elif u.path == "/api/results":
             self._json(list_results())
-        elif u.path == "/api/local/scan":
-            host = (q.get("host") or "127.0.0.1").strip()
-            if not local.is_local(f"http://{host}/"):
-                return self._json({"error": "Можно сканировать только этот компьютер или локальную сеть"}, 400)
-            self._json(local.scan(host, [p for p in (q.get("ports") or "").split(",") if p.strip()]))
-        elif u.path == "/api/public":
-            import public
-            self._json({"benches": public.BENCHES,
-                        "cached": sorted(f.stem for f in public.CACHE.glob("*.json")) if public.CACHE.exists() else []})
-        elif u.path == "/api/batch/last":
-            self._json(batch.last_batch(RESULTS) or {})
-        elif u.path == "/api/catalog":
-            self._json(bench.catalog(int(q.get("ctx", 80000))))
+        elif u.path == "/api/public/status":
+            keys = [k for k in q.get("keys", "").split(",") if k in public_bench.PUBLIC] or public_bench.ORDER
+            data = public_bench.status(DATA_DIR / "public_cache")
+            data["estimated_tokens"] = public_bench.estimate_tokens(keys, DATA_DIR / "public_cache")
+            self._json(data)
         elif u.path == "/api/refs":
             self._json([{k: r.get(k) for k in ("name", "family", "model", "date", "builtin", "deltas", "summary", "tok_per_sec")}
                         for r in verify.load_refs(RESULTS)])
@@ -170,11 +168,6 @@ class H(BaseHTTPRequestHandler):
         u, body = urlparse(self.path), self._body()
         if u.path == "/api/check":
             self._json(check_key(body))
-        elif u.path == "/api/batch":
-            items, errors = batch.parse_lines(body.get("text"), body.get("base_url") or "")
-            if not items:
-                return self._json({"error": "Нет ни одного ключа. " + "; ".join(errors)}, 400)
-            self._json({"id": start_run(body, "batch"), "count": len(items)})
         elif u.path == "/api/run":
             self._json({"id": start_run(body)})
         elif u.path == "/api/cancel":
@@ -182,6 +175,16 @@ class H(BaseHTTPRequestHandler):
             if run:
                 run["cancel"].set()
             self._json({"ok": bool(run)})
+        elif u.path == "/api/public/download":
+            keys = [k for k in body.get("keys", []) if k in public_bench.PUBLIC]
+            if not keys:
+                return self._json({"ok": False, "error": "Выберите хотя бы один публичный бенчмарк"}, 400)
+            try:
+                data = public_bench.download(keys, DATA_DIR / "public_cache", body.get("hf_token", "").strip())
+                data.update(ok=True, estimated_tokens=public_bench.estimate_tokens(keys, DATA_DIR / "public_cache"))
+                self._json(data)
+            except public_bench.PublicDataError as e:
+                self._json({"ok": False, "error": str(e)})
         elif u.path == "/api/refs/add":
             f = RESULTS / Path(body.get("file", "")).name
             try:
@@ -202,14 +205,24 @@ class H(BaseHTTPRequestHandler):
             self._json({"error": "not found"}, 404)
 
 
+class BenchServer(ThreadingHTTPServer):
+    daemon_threads = True
+    allow_reuse_address = False
+
+
+def create_server(port=None):
+    """Создаёт локальный сервер; port=0 выбирает свободный порт для нативной оболочки."""
+    RESULTS.mkdir(parents=True, exist_ok=True)
+    return BenchServer(("127.0.0.1", PORT if port is None else port), H)
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
-    RESULTS.mkdir(exist_ok=True)
-    srv = ThreadingHTTPServer(("127.0.0.1", PORT), H)
-    url = f"http://127.0.0.1:{PORT}"
+    srv = create_server()
+    url = f"http://127.0.0.1:{srv.server_address[1]}"
     print(f"LLM Bench: {url}  (Ctrl+C — выход)")
     if "--no-browser" not in sys.argv:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
