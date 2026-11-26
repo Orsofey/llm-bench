@@ -53,7 +53,7 @@ class PublicBenchmarkTests(unittest.TestCase):
     def test_status_and_estimate(self):
         with tempfile.TemporaryDirectory() as d:
             data = pb.status(d)
-            self.assertEqual(data["total"], 118)
+            self.assertEqual(data["total"], 123)
             self.assertGreaterEqual(data["cached"], 3)
             self.assertGreater(pb.estimate_tokens(["mmlu_pro"], d), 0)
 

@@ -29,7 +29,7 @@ def env_info():
             "ffmpeg": bool(bench.FFMPEG and bench.FFPROBE),
             "categories": sorted({t["cat"] for t in bench.TASKS} | {"context"}),
             "tiktoken": bool(verify.builtin_refs()), "platform": PLATFORM,
-            "supports_cli": PLATFORM != "android", "version": "1.2.0"}
+            "supports_cli": PLATFORM != "android", "version": "1.3.0"}
 
 
 def check_key(cfg):
@@ -194,7 +194,7 @@ class H(BaseHTTPRequestHandler):
             if not keys:
                 return self._json({"ok": False, "error": "Выберите хотя бы один публичный бенчмарк"}, 400)
             try:
-                data = public_bench.download(keys, DATA_DIR / "public_cache", body.get("hf_token", "").strip())
+                data = public_bench.download(keys, DATA_DIR / "public_cache", body.get("hf_token", "").strip(), body.get("arc_api_key", "").strip())
                 data.update(ok=True, estimated_tokens=public_bench.estimate_tokens(keys, DATA_DIR / "public_cache"))
                 self._json(data)
             except public_bench.PublicDataError as e:

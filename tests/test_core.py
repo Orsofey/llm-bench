@@ -58,11 +58,11 @@ class CoreTests(unittest.TestCase):
                     html = response.read().decode("utf-8")
                 with urllib.request.urlopen(base + "/api/public/status", timeout=5) as response:
                     public = json.load(response)
-                self.assertEqual(env["version"], "1.2.0")
+                self.assertEqual(env["version"], "1.3.0")
                 self.assertIn("AI model intelligence", html)
                 self.assertIn("Orsofey", html)
-                self.assertEqual(public["total"], 118)
-                self.assertEqual(len(public["benchmarks"]), 5)
+                self.assertEqual(public["total"], 123)
+                self.assertEqual(len(public["benchmarks"]), 7)
             finally:
                 srv.shutdown()
                 srv.server_close()

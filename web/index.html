@@ -514,9 +514,9 @@ details{border-top:1px solid rgba(175,157,255,.08);padding-top:11px}summary{font
       <div class="public-main">
         <div class="panel public-hero">
           <div class="public-eyebrow">PUBLIC BENCHMARKS · MINI EDITION</div>
-          <h1>Один прогон.<br><em>Пять независимых испытаний.</em></h1>
+          <h1>Один прогон.<br><em>Семь независимых испытаний.</em></h1>
           <p>Настоящие вопросы из открытых исследовательских наборов. Строгие проверки ответов, локальные тесты кода и никаких оценок «на глаз».</p>
-          <div class="public-stats"><div><b>5</b><span>наборов</span></div><div><b>118</b><span>заданий</span></div><div><b>14</b><span>дисциплин</span></div></div>
+          <div class="public-stats"><div><b id="publicSets">7</b><span>наборов</span></div><div><b id="publicTasks">123</b><span>заданий</span></div><div><b>14</b><span>дисциплин</span></div></div>
         </div>
         <div class="public-grid" id="publicCards"></div>
       </div>
@@ -528,6 +528,12 @@ details{border-top:1px solid rgba(175,157,255,.08);padding-top:11px}summary{font
             <input class="in" id="hfToken" type="password" placeholder="hf_••••••••••••••••••••" spellcheck="false" autocomplete="off">
             <label class="ck"><input type="checkbox" id="rememberHf"> Запомнить токен в этом браузере</label>
             <div class="hint" style="margin-top:9px">Нужен бесплатный <b>Read</b>-токен. Сначала примите условия на страницах <a href="https://huggingface.co/datasets/Idavidrein/gpqa" target="_blank" rel="noopener">GPQA</a> и <a href="https://huggingface.co/datasets/cais/hle" target="_blank" rel="noopener">HLE</a>.</div>
+          </div>
+          <div id="arcWrap" class="hide">
+            <label class="f">ARC_API_KEY — для ARC-AGI-3 (необязательно)</label>
+            <input class="in" id="arcKey" type="password" placeholder="Ключ ARC Prize" spellcheck="false" autocomplete="off">
+            <label class="ck"><input type="checkbox" id="rememberArc"> Запомнить ключ</label>
+            <div class="hint" style="margin-top:9px">Официальные среды и scorecard через пакет arc-agi. Без ключа используется anonymous API key, если он доступен. Получить ключ: <a href="https://arcprize.org/platform" target="_blank" rel="noopener">arcprize.org/platform</a>.</div>
           </div>
           <button class="btn second" id="publicDownload">Скачать / проверить данные</button>
           <div class="msg" id="publicMsg"></div>
@@ -606,12 +612,12 @@ details{border-top:1px solid rgba(175,157,255,.08);padding-top:11px}summary{font
     </div>
   </section>
 
-  <div class="footer"><span>LOCAL LLM EVALUATION</span><span>LLM Bench 1.2.0 · crafted by Orsofey</span></div>
+  <div class="footer"><span>LOCAL LLM EVALUATION</span><span>LLM Bench 1.3.0 · crafted by Orsofey</span></div>
 </div>
 
 <script>
 const CAT = {code:"Кодинг", hard:"Сложные", montage:"Монтаж", agent:"Агент (голос)", funnel:"Воронка", instruct:"Инструкции", context:"Длинный контекст"};
-const PUBLIC_CAT = {mmlu_pro:"MMLU-Pro",gpqa:"GPQA Diamond",hle:"Humanity's Last Exam",arc_agi_2:"ARC-AGI-2",livecodebench:"LiveCodeBench"};
+const PUBLIC_CAT = {mmlu_pro:"MMLU-Pro",gpqa:"GPQA Diamond",hle:"Humanity's Last Exam",arc_agi_2:"ARC-AGI-2",livecodebench:"LiveCodeBench",arc_agi_3:"ARC-AGI-3",rli:"Remote Labor Index"};
 const STAGES = {connect:"Подключение", verify:"Подлинность", tasks:"Задачи", done:"Итог"};
 const PROBE_NAMES = {en:"Английский", ru:"Русский", code:"Код", num:"Числа", mix:"Эмодзи/иероглифы"};
 const VERDICT = {ok:["✓","Похоже на заявленную модель"], warn:["!","Есть вопросы"], unknown:["?","Нельзя подтвердить"], fake:["✗","Похоже на подмену"], ref:["★","Эталон сохранён"]};
@@ -650,16 +656,21 @@ $$("nav.tabs button").forEach(b => b.onclick = () => activateTab(b.dataset.tab))
 /* ---------- public mini-benchmarks ---------- */
 function renderPublic(){
   $("#publicModel").textContent = $("#model").value.trim() || "укажите модель на вкладке «Новый прогон»";
-  const count = publicSelected.reduce((n,k) => n + ({mmlu_pro:40,gpqa:30,hle:30,arc_agi_2:6,livecodebench:12}[k] || 0), 0);
+  const count = publicSelected.reduce((n,k) => n + ({mmlu_pro:40,gpqa:30,hle:30,arc_agi_2:6,livecodebench:12,arc_agi_3:3,rli:2}[k] || 0), 0);
   $("#publicRun span").textContent = count ? `Запустить ${count} заданий` : "Выберите наборы";
   $("#publicRun").disabled = !count || publicLoading;
   $("#publicSelectAll").textContent = publicSelected.length === Object.keys(PUBLIC_CAT).length ? "Снять выделение" : "Выбрать все наборы";
   const needHf = publicSelected.some(k => publicInfo?.benchmarks?.find(b => b.id === k)?.requires_hf);
   $("#hfWrap").classList.toggle("hide", !needHf);
+  $("#arcWrap").classList.toggle("hide", !publicSelected.includes("arc_agi_3"));
+  if (publicInfo) {
+    $("#publicSets").textContent = publicInfo.benchmarks.length;
+    $("#publicTasks").textContent = publicInfo.total;
+  }
   $("#publicEstimate").textContent = count ? "≈ " + fmt(publicInfo?.estimated_tokens || 0) + " токенов" : "—";
   if (!publicInfo) { $("#publicCards").innerHTML = `<div class="empty">Загружаю сведения о наборах…</div>`; return; }
   $("#publicCards").innerHTML = publicInfo.benchmarks.map(b => {
-    const on = publicSelected.includes(b.id), status = b.cached ? "скачан" : (b.requires_hf ? "нужен токен HF" : "недоступен");
+    const on = publicSelected.includes(b.id), status = b.requires_arc ? "ARC key / online" : (b.cached ? "скачан" : (b.requires_hf ? "нужен токен HF" : "недоступен"));
     return `<button class="public-card ${on ? "on" : ""}" data-public="${b.id}"><span class="pc-status ${b.cached ? "" : "lock"}">${status}</span><span class="pc-top"><span class="pc-name">${esc(b.name)}</span></span><span class="pc-desc">${esc(b.description)}</span><span class="pc-count"><b>${b.count}</b> заданий</span></button>`;
   }).join("");
   $$(".public-card").forEach(card => card.onclick = () => {
@@ -686,7 +697,7 @@ $("#publicDownload").onclick = async () => {
   publicLoading = true; renderPublic();
   const m = $("#publicMsg"); m.className = "msg"; m.textContent = "Проверяю кеш и скачиваю выбранные наборы…";
   try {
-    const r = await api("/api/public/download", {keys: publicSelected, hf_token: $("#hfToken").value.trim()});
+    const r = await api("/api/public/download", {keys: publicSelected, hf_token: $("#hfToken").value.trim(), arc_api_key: $("#arcKey").value.trim()});
     if (r.benchmarks) publicInfo = r;
     m.className = "msg " + (r.ok ? "ok" : "bad");
     m.textContent = r.ok ? "✓ Все выбранные мини-наборы готовы локально" : (r.error || "Не удалось скачать");
@@ -698,6 +709,10 @@ const savedHf = store.get("hf_token", "");
 $("#hfToken").value = savedHf; $("#rememberHf").checked = !!savedHf;
 $("#hfToken").oninput = () => { if ($("#rememberHf").checked) store.set("hf_token", $("#hfToken").value.trim()); };
 $("#rememberHf").onchange = e => store.set("hf_token", e.target.checked ? $("#hfToken").value.trim() : "");
+const savedArc = store.get("arc_api_key", "");
+$("#arcKey").value = savedArc; $("#rememberArc").checked = !!savedArc;
+$("#arcKey").oninput = () => { if ($("#rememberArc").checked) store.set("arc_api_key", $("#arcKey").value.trim()); };
+$("#rememberArc").onchange = e => store.set("arc_api_key", e.target.checked ? $("#arcKey").value.trim() : "");
 
 /* ---------- connection ---------- */
 function setMode(m){
@@ -865,7 +880,7 @@ $$(".cat").forEach(b => b.onclick = () => { const k = b.dataset.c; cats = cats.i
 async function start(onlyVerify, publicKeys = null){
   const c = cfg();
   if (publicKeys) Object.assign(c, {public: publicKeys, only: publicKeys, verify: false, behavior: false,
-    repeat: 1, workers: 1, ctx_chars: 0, save_ref: "", claimed: "", hf_token: $("#hfToken").value.trim(),
+    repeat: 1, workers: 1, ctx_chars: 0, save_ref: "", claimed: "", hf_token: $("#hfToken").value.trim(), arc_api_key: $("#arcKey").value.trim(),
     tag: c.tag ? c.tag + "-public" : "public-mini"});
   if (mode === "api" && prov === "custom" && !c.base_url) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Укажите адрес API сервиса, который выдал ключ"; return; }
   if (mode === "api" && (!c.key || !c.model)) { $("#checkMsg").className = "msg bad"; $("#checkMsg").textContent = "Нужны ключ и модель"; return; }
@@ -935,7 +950,7 @@ function renderVerify(v){
   $("#verifyBox").innerHTML = html + `</div>`;
   if (fp.overhead != null && fp.overhead > 150) overhead = fp.overhead;
 }
-const CAT_SHORT = {code:"Код",hard:"Логика",montage:"Монтаж",agent:"Агент",funnel:"Воронка",instruct:"Формат",context:"Контекст",mmlu_pro:"MMLU",gpqa:"GPQA",hle:"HLE",arc_agi_2:"ARC",livecodebench:"LCB"};
+const CAT_SHORT = {code:"Код",hard:"Логика",montage:"Монтаж",agent:"Агент",funnel:"Воронка",instruct:"Формат",context:"Контекст",mmlu_pro:"MMLU",gpqa:"GPQA",hle:"HLE",arc_agi_2:"ARC",livecodebench:"LCB",arc_agi_3:"ARC3",rli:"RLI"};
 function renderRadar(){
   const box = $("#radarWrap"), svg = $("#radarChart");
   box.classList.toggle("hide", radarCats.length < 3);

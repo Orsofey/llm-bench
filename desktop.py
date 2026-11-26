@@ -33,8 +33,8 @@ def smoke_test(path):
         python_score, python_note = app.bench.run_py(
             "def twice(x):\n    return x * 2\n", ["twice(4)==8", "twice('a')=='aa'"], timeout=5,
         )
-        result = {"ok": "LLM Bench" in html and env.get("version") == "1.2.0" and python_score == 1.0
-                          and public.get("total") == 118 and public.get("cached", 0) >= 3,
+        result = {"ok": "LLM Bench" in html and env.get("version") == "1.3.0" and python_score == 1.0
+                          and public.get("total") == 123 and public.get("cached", 0) >= 3,
                   "port": srv.server_address[1], "platform": env.get("platform"),
                   "html_bytes": len(html.encode("utf-8")), "python_tests": python_note,
                   "public_cached": public.get("cached")}

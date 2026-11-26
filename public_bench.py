@@ -51,6 +51,16 @@ PUBLIC = {
         "description": "Олимпиадные задачи, код запускается на тестах", "short": "LCB",
         "out_tokens": 4000, "dataset": "livecodebench/code_generation", "config": "default", "split": "test",
     },
+    "arc_agi_3": {
+        "name": "ARC-AGI-3", "count": 3, "file": "arc_agi_3.json", "requires_hf": False, "requires_arc": True,
+        "description": "Интерактивные агентные игры: действия, уровни и официальный scorecard", "short": "ARC3",
+        "out_tokens": 60000, "dataset": "arcprize/ARC-AGI-3", "config": "online", "split": "mini",
+    },
+    "rli": {
+        "name": "Remote Labor Index", "count": 2, "file": "rli.json", "requires_hf": False,
+        "description": "Проектные задания: игра и dashboard с реальными данными + LLM-judge", "short": "RLI",
+        "out_tokens": 18000, "dataset": "cais/rli-public-set", "config": "default", "split": "text-mini",
+    },
 }
 ORDER = list(PUBLIC)
 _STDIO_LOCK = threading.Lock()
@@ -80,15 +90,16 @@ def status(cache_dir):
         packaged = DATA_ROOT / spec["file"]
         cached = _cache_path(cache_dir, key)
         path = cached if spec["requires_hf"] and cached.is_file() else packaged
-        available = path.is_file()
-        count = 0
-        if available:
+        available = True if key == "arc_agi_3" else path.is_file()
+        count = spec["count"] if key == "arc_agi_3" else 0
+        if available and key != "arc_agi_3":
             try:
                 count = len(_read_json(path))
             except PublicDataError:
                 available = False
         out["benchmarks"].append({"id": key, "name": spec["name"], "description": spec["description"],
                                   "count": spec["count"], "actual_count": count, "requires_hf": spec["requires_hf"],
+                                  "requires_arc": spec.get("requires_arc", False),
                                   "cached": available, "source": "кеш" if path == cached and available else "встроено"})
         out["total"] += spec["count"]
         out["cached"] += int(available)
@@ -100,6 +111,9 @@ def estimate_tokens(keys, cache_dir):
     total = 0
     for key in keys:
         spec = PUBLIC[key]
+        if key == "arc_agi_3":
+            total += spec["count"] * spec["out_tokens"]
+            continue
         path = _cache_path(cache_dir, key) if spec["requires_hf"] else DATA_ROOT / spec["file"]
         if spec["requires_hf"] and not path.is_file():
             path = DATA_ROOT / spec["file"]
@@ -212,12 +226,16 @@ def _download_hle(cache_dir, token):
     _atomic_write(_cache_path(cache_dir, "hle"), selected)
 
 
-def download(keys, cache_dir, hf_token):
+def download(keys, cache_dir, hf_token, arc_api_key=None):
     """Скачивает только выбранные gated-наборы; открытые уже встроены."""
     for key in keys:
         if key not in PUBLIC:
             raise PublicDataError(f"Неизвестный бенчмарк: {key}")
         spec = PUBLIC[key]
+        if key == "arc_agi_3":
+            import arc3_bench
+            arc3_bench.list_games(arc_api_key, limit=3)
+            continue
         if not spec["requires_hf"] or _cache_path(cache_dir, key).is_file():
             continue
         if not hf_token:
@@ -377,6 +395,9 @@ def _code_checker(record):
 
 
 def _prompt(key, r):
+    if key == "rli":
+        import rli_bench
+        return rli_bench._worker_prompt(r)
     if key in ("mmlu_pro", "gpqa"):
         letters = "ABCDEFGHIJ"[:len(r["choices"])]
         options = "\n".join(f"{letters[i]}. {value}" for i, value in enumerate(r["choices"]))
@@ -400,6 +421,11 @@ def _prompt(key, r):
 
 
 def _task(key, r, index):
+    if key == "rli":
+        import rli_bench
+        return {"id": f"rli_{index+1:03d}", "cat": key, "prompt": "",
+                "desc": f"RLI · {r['title']} · HTML + LLM-judge", "public": True,
+                "driver": lambda cl, emit, record=r: rli_bench.run_task(cl, record, emit)}
     if key in ("mmlu_pro", "gpqa"):
         letters = "ABCDEFGHIJ"[:len(r["choices"])]
         check = _choice_checker(r["answer"], letters)
@@ -417,12 +443,20 @@ def _task(key, r, index):
             "desc": f"{PUBLIC[key]['short']} · {detail}", "check": check, "public": True}
 
 
-def tasks(keys, cache_dir, hf_token=None, emit=lambda ev: None):
+def tasks(keys, cache_dir, hf_token=None, emit=lambda ev: None, arc_api_key=None):
     out = []
     for key in keys:
         if key not in PUBLIC:
             raise PublicDataError(f"Неизвестный публичный бенчмарк: {key}")
         emit({"type": "activity", "text": f"Подготавливаю {PUBLIC[key]['name']} ({PUBLIC[key]['count']} заданий)"})
+        if key == "arc_agi_3":
+            import arc3_bench
+            games = arc3_bench.list_games(arc_api_key, limit=PUBLIC[key]["count"])
+            for i, game in enumerate(games):
+                out.append({"id": f"arc_agi_3_{i+1:03d}", "cat": key, "prompt": "",
+                            "desc": f"ARC3 · {game['game_id']} · до 20 действий", "public": True,
+                            "driver": lambda cl, emit, gid=game["game_id"]: arc3_bench.run_task(cl, gid, emit, arc_api_key)})
+            continue
         records = _records(key, cache_dir, hf_token)
         out.extend(_task(key, r, i) for i, r in enumerate(records))
     return out

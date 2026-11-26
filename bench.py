@@ -895,12 +895,23 @@ def health(cl):
 
 
 # ======================= RUNNER =======================
-def run_task(cl, task, repeat):
+def run_task(cl, task, repeat, emit=None):
     scores, notes, usage = [], [], {"in": 0, "out": 0, "sec": 0.0, "requests": 0}
     for _ in range(repeat):
+        if task.get("driver"):
+            before = dict(cl.usage)
+            try:
+                sc, note = task["driver"](cl, emit or (lambda ev: None))
+            except Exception as e:
+                sc, note = 0.0, f"ошибка: {str(e)[:150]}"
+            for key in usage:
+                usage[key] += cl.usage[key] - before[key]
+            scores.append(float(sc))
+            notes.append(note)
+            continue
         try:
             usage["requests"] += 1
-            r = cl.chat(task["prompt"])
+            r = cl.chat(task["prompt"], max_tokens=task.get("max_tokens"))
             sc, note = task["check"](r["text"])
             usage["in"] += r["in"] or 0
             usage["out"] += r["out"] or 0
@@ -956,7 +967,7 @@ def run_benchmark(cfg, emit=lambda ev: None, cancel=None):
     public_keys = [k for k in (cfg.get("public") or []) if k]
     if public_keys:
         import public_bench
-        tasks = public_bench.tasks(public_keys, Path(os.environ.get("LLM_BENCH_DATA_DIR", str(out.parent))) / "public_cache", cfg.get("hf_token"), emit)
+        tasks = public_bench.tasks(public_keys, Path(os.environ.get("LLM_BENCH_DATA_DIR", str(out.parent))) / "public_cache", cfg.get("hf_token"), emit, cfg.get("arc_api_key"))
     else:
         ctx = int(cfg.get("ctx_chars") or 0)
         tasks = TASKS + ([needle_task(ctx)] if ctx else [])
@@ -999,7 +1010,7 @@ def run_benchmark(cfg, emit=lambda ev: None, cancel=None):
             if cancel.is_set():
                 return None
             emit({"type": "task_start", "id": t["id"], "desc": t.get("desc") or TASK_DESC.get(t["id"], "")})
-            return run_task(cl, t, int(cfg.get("repeat") or 1))
+            return run_task(cl, t, int(cfg.get("repeat") or 1), emit)
 
         with ThreadPoolExecutor(1 if public_keys else int(cfg.get("workers") or 4)) as ex:
             for f in as_completed([ex.submit(job, t) for t in tasks]):
