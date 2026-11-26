@@ -1,5 +1,7 @@
 results/
+data_cache/
 public_cache/
+catalog_cache/
 __pycache__/
 *.pyc
 .env

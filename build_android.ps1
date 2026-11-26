@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $android = Join-Path $root "android"
 $pythonExe = (& python -c "import sys; print(sys.executable)").Trim().Replace("\", "/")

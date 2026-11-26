@@ -48,7 +48,7 @@ try {
   await pause(2200);
   if (process.env.LLM_BENCH_TAB) {
     await cdp("Runtime.evaluate", { expression: `document.querySelector('[data-tab="${process.env.LLM_BENCH_TAB}"]').click()` });
-    await pause(800);
+    await pause(process.env.LLM_BENCH_TAB === "models" ? 10000 : 800);
   }
   const result = await cdp("Runtime.evaluate", {
     expression: `JSON.stringify({viewport:[innerWidth,innerHeight],scroll:[document.documentElement.scrollWidth,document.documentElement.scrollHeight],overflow:document.documentElement.scrollWidth>innerWidth,wide:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).slice(0,12).map(e=>({tag:e.tagName,id:e.id,cls:e.className,right:Math.round(e.getBoundingClientRect().right)}))})`,

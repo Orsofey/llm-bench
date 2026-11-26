@@ -8,6 +8,7 @@ from urllib.parse import urlparse, parse_qs
 import bench
 import verify
 import public_bench
+import model_catalog
 
 ROOT = Path(os.environ.get("LLM_BENCH_ROOT", str(Path(__file__).parent))).resolve()
 PLATFORM = os.environ.get("LLM_BENCH_PLATFORM", "desktop")
@@ -28,7 +29,7 @@ def env_info():
             "ffmpeg": bool(bench.FFMPEG and bench.FFPROBE),
             "categories": sorted({t["cat"] for t in bench.TASKS} | {"context"}),
             "tiktoken": bool(verify.builtin_refs()), "platform": PLATFORM,
-            "supports_cli": PLATFORM != "android", "version": "1.0.0"}
+            "supports_cli": PLATFORM != "android", "version": "1.2.0"}
 
 
 def check_key(cfg):
@@ -138,6 +139,15 @@ class H(BaseHTTPRequestHandler):
             self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
             self.end_headers()
             self.wfile.write(b)
+        elif u.path == "/catalog.js":
+            b = (ROOT / "web" / "catalog.js").read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/javascript; charset=utf-8")
+            self.send_header("Content-Length", str(len(b)))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.end_headers()
+            self.wfile.write(b)
         elif u.path == "/api/env":
             self._json(env_info())
         elif u.path == "/api/run":
@@ -148,6 +158,8 @@ class H(BaseHTTPRequestHandler):
             self._json({"status": run["status"], "events": run["events"][since:], "next": len(run["events"])})
         elif u.path == "/api/results":
             self._json(list_results())
+        elif u.path == "/api/catalog":
+            self._json(model_catalog.catalog(RESULTS, force=q.get("refresh") == "1"))
         elif u.path == "/api/public/status":
             keys = [k for k in q.get("keys", "").split(",") if k in public_bench.PUBLIC] or public_bench.ORDER
             data = public_bench.status(DATA_DIR / "public_cache")
@@ -175,6 +187,8 @@ class H(BaseHTTPRequestHandler):
             if run:
                 run["cancel"].set()
             self._json({"ok": bool(run)})
+        elif u.path == "/api/catalog/refresh":
+            self._json(model_catalog.catalog(RESULTS, aa_key=body.get("aa_key", "").strip(), force=True))
         elif u.path == "/api/public/download":
             keys = [k for k in body.get("keys", []) if k in public_bench.PUBLIC]
             if not keys:

@@ -334,6 +334,10 @@ details{border-top:1px solid rgba(175,157,255,.08);padding-top:11px}summary{font
 @media(max-width:1080px){.public-layout{grid-template-columns:minmax(0,1fr) 310px}.public-hero h1{font-size:28px}}
 @media(max-width:820px){.public-layout{grid-template-columns:1fr}.public-side{display:grid;grid-template-columns:1fr 1fr;gap:16px}.public-side .panel+.panel{margin-top:0}}
 @media(max-width:680px){.tab-full{display:none}.tab-short{display:inline}.public-hero{padding:24px 21px}.public-hero h1{font-size:27px}.public-stats{gap:16px}.public-grid{grid-template-columns:1fr}.public-card:last-child{grid-column:auto}.public-card{min-height:127px}.public-side{display:block}.public-side .panel+.panel{margin-top:15px}nav.tabs button{gap:5px;font-size:9px;padding-left:4px;padding-right:4px}}
+/* Model catalog */
+.models-shell{display:flex;flex-direction:column;gap:16px;animation:rise .35s ease-out}.models-hero{position:relative;overflow:hidden;padding:27px 29px;background:linear-gradient(120deg,rgba(40,31,71,.6),rgba(16,19,31,.74) 60%,rgba(16,38,42,.34))}.models-hero::after{content:"";position:absolute;width:280px;height:280px;right:-40px;top:-130px;border-radius:50%;border:1px solid rgba(155,135,245,.12);box-shadow:0 0 0 45px rgba(155,135,245,.025),0 0 0 90px rgba(86,224,210,.018)}.models-eyebrow{font-size:9px;letter-spacing:.18em;color:#a99bd0;margin-bottom:10px}.models-hero h1{position:relative;z-index:1;margin:0 0 8px;font-size:31px;line-height:1.13;letter-spacing:-.045em;font-weight:680}.models-hero h1 em{font-style:normal;background:linear-gradient(100deg,#b5a3ff,#61e0d2);-webkit-background-clip:text;background-clip:text;color:transparent}.models-hero p{position:relative;z-index:1;margin:0;color:#9690a6;font-size:11px;line-height:1.6}.models-stats{position:relative;z-index:1;display:flex;gap:22px;margin-top:17px}.models-stats div{display:flex;align-items:baseline;gap:6px}.models-stats b{font-size:21px;font-weight:650;letter-spacing:-.04em;color:#ded5f5}.models-stats span{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#777083}.models-toolbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:14px 15px}.models-toolbar .in{width:auto;min-width:0;padding:9px 11px;font-size:11px;border-radius:11px}.models-search{flex:1 1 230px}.models-toolbar select{flex:0 1 155px;color:#aca4bb}.models-toolbar .btn{padding:9px 12px;font-size:11px}.models-view{display:flex;padding:3px;border:1px solid var(--line);border-radius:11px;background:rgba(5,5,12,.35);margin-left:auto}.models-view button{border:0;background:transparent;color:var(--tx3);font-size:10px;padding:6px 10px;border-radius:8px;cursor:pointer}.models-view button.act{background:rgba(143,115,233,.2);color:#d8cbea}.models-update{width:100%;border-top:1px solid rgba(173,153,255,.07);padding-top:9px;margin-top:1px}.models-update summary{font-size:10px}.models-update-grid{display:grid;grid-template-columns:minmax(200px,1fr) auto auto;gap:9px;align-items:center;margin-top:9px}.models-update-grid .ck{margin:0}.models-update-grid .btn{white-space:nowrap}.models-meta{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:0 4px;color:#746c81;font-size:10px}.models-meta a{color:#9b86d4;text-decoration:none}.models-meta a:hover{text-decoration:underline}.models-meta .ok{color:var(--ok)}.models-meta .warn{color:var(--mid)}.model-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.model-card{position:relative;padding:17px 17px 15px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,rgba(24,23,39,.76),rgba(13,13,24,.72));cursor:pointer;overflow:hidden;transition:transform .18s,border-color .18s,box-shadow .18s}.model-card:hover{transform:translateY(-2px);border-color:rgba(166,144,255,.34);box-shadow:0 12px 35px rgba(0,0,0,.14)}.model-card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.model-card h3{margin:0;font-size:14px;line-height:1.3;letter-spacing:-.02em;color:#ded6eb;font-weight:630}.model-lab{margin-top:5px;color:#7f768e;font-size:9px;letter-spacing:.04em}.model-badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}.model-badge{display:inline-flex;align-items:center;padding:3px 6px;border:1px solid rgba(173,153,255,.1);border-radius:6px;font-size:8px;color:#8d839c;background:rgba(255,255,255,.015)}.model-badge.country{color:#b2a0e8;border-color:rgba(155,135,245,.17);background:rgba(155,135,245,.06)}.model-badge.open{color:#8edcbd;border-color:rgba(84,223,176,.15);background:rgba(84,223,176,.05)}.model-badge.reason{color:#83dcd4;border-color:rgba(86,224,210,.14);background:rgba(86,224,210,.05)}.model-score{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:16px 0 12px;padding-bottom:12px;border-bottom:1px solid rgba(173,153,255,.08)}.model-score-main{display:flex;align-items:baseline;gap:6px}.model-score-main b{font-size:31px;font-weight:630;letter-spacing:-.055em;color:#c3b1f3}.model-score-main span{font-size:8px;color:#746c82;letter-spacing:.08em;text-transform:uppercase}.model-score-side{text-align:right;font-size:9px;color:#8b8397}.model-score-side b{color:#b8dcd0;font-weight:560}.model-mini-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.model-mini{padding:7px 8px;border-radius:9px;background:rgba(6,6,13,.28);border:1px solid rgba(173,153,255,.065)}.model-mini span{display:block;font-size:7px;letter-spacing:.08em;color:#696172;text-transform:uppercase}.model-mini b{display:block;margin-top:3px;font-size:11px;font-weight:570;color:#c5bad5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.model-own{grid-column:1/-1;background:linear-gradient(100deg,rgba(155,135,245,.07),rgba(86,224,210,.035))}.model-card-foot{display:flex;justify-content:space-between;gap:8px;margin-top:11px;color:#6d657a;font-size:8px}.models-table-wrap{border:1px solid var(--line);border-radius:17px;overflow:auto;max-height:68vh;background:rgba(14,14,25,.58)}.models-table{width:100%;min-width:1050px;border-collapse:collapse}.models-table th{position:sticky;top:0;z-index:2;background:#171522;padding:12px 11px;font-size:8px;letter-spacing:.09em;white-space:nowrap;cursor:pointer}.models-table th:hover{color:#c2b2e6}.models-table td{padding:11px;border-bottom:1px solid rgba(173,153,255,.065);font-size:10px;white-space:nowrap}.models-table td:first-child{white-space:normal;min-width:220px}.models-table tbody tr{cursor:pointer;transition:background .15s}.models-table tbody tr:hover{background:rgba(155,135,245,.04)}.table-model-name{color:#d6cbe7;font-size:11px;font-weight:600}.table-model-lab{display:block;margin-top:3px;color:#736a81;font-size:8px}.models-pagination{display:flex;align-items:center;justify-content:center;gap:13px;padding:4px}.models-pagination .btn{font-size:10px;padding:7px 12px}.models-pagination span{font-size:10px;color:#7e748c}.models-empty{grid-column:1/-1;padding:50px 15px;text-align:center;color:#766e84}.model-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:24px;background:rgba(2,2,7,.76);backdrop-filter:blur(10px);animation:fadeIn .18s ease-out}.model-modal{position:relative;width:min(860px,100%);max-height:90vh;overflow:auto;padding:25px;border:1px solid rgba(175,153,255,.24);border-radius:22px;background:linear-gradient(145deg,#1b182b,#0e0e19);box-shadow:0 30px 100px rgba(0,0,0,.55)}.model-modal-close{position:absolute;right:14px;top:14px;width:31px;height:31px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.025);color:#aaa0ba;cursor:pointer;font-size:17px}.model-detail-head{padding-right:45px}.model-detail-head h2{margin:0;font-size:26px;line-height:1.2;letter-spacing:-.04em;color:#e4dcf3}.model-detail-head p{margin:7px 0 0;color:#898095;font-size:11px;line-height:1.6}.model-detail-description{margin:18px 0;padding:13px 14px;border-radius:12px;background:rgba(7,7,14,.3);color:#9c93aa;font-size:11px;line-height:1.65}.model-detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:15px 0}.model-detail-metric{padding:12px;border:1px solid rgba(173,153,255,.09);border-radius:12px;background:rgba(7,7,14,.25)}.model-detail-metric span{display:block;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:#756c83}.model-detail-metric b{display:block;margin-top:5px;font-size:18px;font-weight:600;letter-spacing:-.03em;color:#d0c1e8}.model-detail-section{margin-top:18px}.model-detail-section h3{margin:0 0 9px;font-size:10px;letter-spacing:.12em;color:#a89bb9;text-transform:uppercase}.model-detail-kv{display:grid;grid-template-columns:150px 1fr;gap:7px 12px;font-size:10px}.model-detail-kv dt{color:#746b82}.model-detail-kv dd{margin:0;color:#b4a9c5;word-break:break-word}.model-detail-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px}.model-detail-actions a,.model-detail-actions button{padding:9px 13px;border-radius:11px;font-size:11px;text-decoration:none}.model-detail-actions a{color:#b9a3ef}.model-provider-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(173,153,255,.06);font-size:10px}.model-provider-row span:last-child{color:#7d738b;text-align:right}.model-provider-row a{color:#a68ddc;text-decoration:none}.models-refresh-msg{font-size:10px;margin-top:8px;color:#8e849c;white-space:pre-line}.models-loading{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}.models-skeleton{height:245px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(100deg,rgba(255,255,255,.015),rgba(155,135,245,.06),rgba(255,255,255,.015));background-size:200% 100%;animation:shimmer 1.5s linear infinite}@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@media(max-width:1180px){.model-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.models-loading{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.model-cards{grid-template-columns:1fr}.models-loading{grid-template-columns:1fr}.models-toolbar{align-items:stretch}.models-toolbar select{flex:1 1 130px}.models-view{margin-left:0}.models-update-grid{grid-template-columns:1fr}.models-stats{gap:15px}.model-detail-grid{grid-template-columns:repeat(2,1fr)}.model-backdrop{padding:10px}.model-modal{padding:19px 16px}.model-detail-kv{grid-template-columns:115px 1fr}.models-hero h1{font-size:27px}.models-toolbar .btn{flex:1}}
 </style>
 </head>
 <body>
@@ -357,6 +361,7 @@ details{border-top:1px solid rgba(175,157,255,.08);padding-top:11px}summary{font
   <nav class="tabs">
     <button class="act" data-tab="run"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 17 9 12l3 3 7-9"/><path d="M14 6h5v5"/></svg><span class="tab-full">Новый прогон</span><span class="tab-short">Прогон</span></button>
     <button data-tab="public"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><path d="M8 12h8M12 8v8"/></svg><span class="tab-full">Публичные</span><span class="tab-short">Публичные</span></button>
+    <button data-tab="models"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c3 3 3 13 0 16M12 4c-3 3-3 13 0 16"/></svg><span class="tab-full">Модели</span><span class="tab-short">Модели</span></button>
     <button data-tab="hist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 19V9m5 10V5m5 14v-7m5 7V3"/></svg><span class="tab-full">История и сравнение</span><span class="tab-short">История</span></button>
   </nav>
 
@@ -542,6 +547,43 @@ details{border-top:1px solid rgba(175,157,255,.08);padding-top:11px}summary{font
     </div>
   </section>
 
+  <section id="tab-models" class="hide">
+    <div class="models-shell">
+      <div class="panel models-hero">
+        <div class="models-eyebrow">GLOBAL MODEL CATALOG · LIVE + CACHE</div>
+        <h1>Все модели.<br><em>Одна честная витрина.</em></h1>
+        <p>США, Китай, Россия и Европа — от OpenAI и Anthropic до Tencent, GigaChat и YandexGPT. Метрики только с источником и датой.</p>
+        <div class="models-stats"><div><b id="modelsTotal">—</b><span>моделей</span></div><div><b id="modelsMeasured">—</b><span>с индексом</span></div><div><b id="modelsCountries">—</b><span>стран</span></div></div>
+      </div>
+      <div class="panel models-toolbar">
+        <input class="in models-search" id="modelSearch" placeholder="Название, провайдер или ID модели…" spellcheck="false">
+        <select class="in" id="modelRegion" aria-label="Регион"><option value="">Все регионы</option><option value="США">США</option><option value="Китай">Китай</option><option value="Россия">Россия</option><option value="Европа">Европа</option><option value="Другие">Другие страны</option></select>
+        <select class="in" id="modelLab" aria-label="Провайдер"><option value="">Все провайдеры</option></select>
+        <select class="in" id="modelOpen" aria-label="Открытость"><option value="">Все лицензии</option><option value="open">Open weights</option><option value="closed">Проприетарные</option></select>
+        <select class="in" id="modelSort" aria-label="Сортировка"><option value="intelligence">По интеллекту</option><option value="arena">По Arena</option><option value="newest">Сначала новые</option><option value="priceAsc">Цена ↑</option><option value="priceDesc">Цена ↓</option><option value="context">Контекст ↓</option><option value="speed">Скорость ↓</option><option value="own">Мои результаты</option><option value="name">По названию</option></select>
+        <div class="models-view"><button class="act" data-model-view="cards">Карточки</button><button data-model-view="table">Таблица</button></div>
+        <details class="models-update"><summary>Обновление данных и Artificial Analysis API</summary>
+          <div class="models-update-grid">
+            <input class="in" id="aaKey" type="password" placeholder="Artificial Analysis API key (необязательно)" autocomplete="off" spellcheck="false">
+            <label class="ck"><input type="checkbox" id="rememberAA"> Запомнить ключ</label>
+            <button class="btn" id="modelsRefresh">Обновить каталог</button>
+          </div>
+          <div class="hint">Бесплатный tier: индексы, цена и скорость. Pro: GPQA, HLE, FrontierCode и расширенные метрики. Ключ используется только для запроса к Artificial Analysis.</div>
+          <div class="models-refresh-msg" id="modelsRefreshMsg"></div>
+        </details>
+      </div>
+      <div class="models-meta"><span id="modelsCount">Загружаю…</span><span>·</span><a href="https://models.dev" target="_blank" rel="noopener">Models.dev</a><span>·</span><a href="https://artificialanalysis.ai" target="_blank" rel="noopener">Artificial Analysis</a><span>·</span><a href="https://github.com/kevinschaul/lmarena-leaderboard-history" target="_blank" rel="noopener">LMArena history</a><span id="modelsDates"></span></div>
+      <div class="models-loading" id="modelsLoading"><div class="models-skeleton"></div><div class="models-skeleton"></div><div class="models-skeleton"></div></div>
+      <div class="model-cards" id="modelCards"></div>
+      <div class="models-table-wrap hide" id="modelsTableWrap"><table class="models-table"><thead><tr><th data-sort="name">Модель</th><th data-sort="region">Регион</th><th data-sort="intelligence">AA Index</th><th data-sort="gpqa">GPQA</th><th data-sort="hle">HLE</th><th data-sort="lcb">Code</th><th data-sort="arena">Arena</th><th data-sort="speed">Ток/с</th><th data-sort="priceAsc">Вход / выход</th><th data-sort="context">Контекст</th><th data-sort="own">LLM Bench</th></tr></thead><tbody id="modelsTableBody"></tbody></table></div>
+      <div class="models-pagination" id="modelsPagination"><button class="btn" id="modelsPrev">← Назад</button><span id="modelsPage">1</span><button class="btn" id="modelsNext">Вперёд →</button></div>
+    </div>
+  </section>
+
+  <div class="model-backdrop hide" id="modelBackdrop" role="dialog" aria-modal="true" aria-label="Метрики модели">
+    <div class="model-modal"><button class="model-modal-close" id="modelClose" aria-label="Закрыть">×</button><div id="modelDetailContent"></div></div>
+  </div>
+
   <section id="tab-hist" class="hide">
     <div class="panel">
       <h2>История прогонов</h2>
@@ -564,7 +606,7 @@ details{border-top:1px solid rgba(175,157,255,.08);padding-top:11px}summary{font
     </div>
   </section>
 
-  <div class="footer"><span>LOCAL LLM EVALUATION</span><span>LLM Bench 1.0 · crafted by Orsofey</span></div>
+  <div class="footer"><span>LOCAL LLM EVALUATION</span><span>LLM Bench 1.2.0 · crafted by Orsofey</span></div>
 </div>
 
 <script>
@@ -598,9 +640,10 @@ let publicSelected = Object.keys(PUBLIC_CAT), publicInfo = null, publicLoading =
 /* ---------- tabs ---------- */
 function activateTab(name){
   $$("nav.tabs button").forEach(x => x.classList.toggle("act", x.dataset.tab === name));
-  ["run","public","hist"].forEach(t => $("#tab-"+t).classList.toggle("hide", t !== name));
+  ["run","public","models","hist"].forEach(t => $("#tab-"+t).classList.toggle("hide", t !== name));
   if (name === "hist") loadHistory();
   if (name === "public") refreshPublic();
+  if (name === "models" && typeof refreshCatalog === "function") refreshCatalog();
 }
 $$("nav.tabs button").forEach(b => b.onclick = () => activateTab(b.dataset.tab));
 
@@ -1081,5 +1124,6 @@ $("#cmpBtn").onclick = () => {
   } catch {}
 })();
 </script>
+<script src="/catalog.js"></script>
 </body>
 </html>
